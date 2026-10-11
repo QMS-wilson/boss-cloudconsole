@@ -1,0 +1,87 @@
+.customer-create {
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
+  padding-bottom: 220rpx;
+}
+
+.form-card {
+  padding: 34rpx 36rpx;
+}
+
+.fc-title {
+  color: #536074;
+  font-size:28rpx;
+  font-weight: 600;
+}
+
+.field {
+  margin-top: 26rpx;
+  position: relative;
+}
+
+.req {
+  position: absolute;
+  left: -8rpx;
+  top: 28rpx;
+  color: #ff4d4f;
+  font-size: 26rpx;
+}
+
+.f-label {
+  color: #536074;
+  font-size: 26rpx;
+}
+
+.f-input {
+  margin-top: 10rpx;
+  width: 100%;
+  box-sizing: border-box;
+  height: 88rpx;
+  border: 2rpx solid #dce1e8;
+  border-radius: 18rpx;
+  background: #f7f8fa;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: #283548;
+}
+
+.f-input.picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #7b8797;
+  line-height: 88rpx;
+}
+
+.chev {
+  color: #9aa5b7;
+}
+
+.f-area {
+  margin-top: 10rpx;
+  width: 100%;
+  box-sizing: border-box;
+  height: 160rpx;
+  border: 2rpx solid #dce1e8;
+  border-radius: 18rpx;
+  background: #f7f8fa;
+  padding: 20rpx 24rpx;
+  font-size: 30rpx;
+  line-height: 1.6;
+  color: #283548;
+}
+
+.sticky-action {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 2rpx solid #e3e7ed;
+  z-index: 30;
+}
+
+.sticky-action .u-btn {
+  width: 100%;
+}

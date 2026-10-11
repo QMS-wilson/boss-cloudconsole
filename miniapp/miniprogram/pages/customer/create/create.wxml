@@ -1,0 +1,55 @@
+<view class="page customer-create">
+  <view class="u-card form-card">
+    <view class="fc-title">基本信息</view>
+    <view class="field">
+      <text class="req">*</text>
+      <view class="f-label">客户名称</view>
+      <input class="f-input" placeholder="请输入客户名称" value="{{name}}" bindinput="onName" />
+    </view>
+    <view class="field">
+      <view class="f-label">客户简称</view>
+      <input class="f-input" placeholder="例如：华强五金" value="{{shortName}}" bindinput="onShort" />
+    </view>
+    <view class="field">
+      <text class="req">*</text>
+      <view class="f-label">客户类型</view>
+      <picker range="{{types}}" value="{{typeIndex}}" bindchange="onType">
+        <view class="f-input picker">
+          {{typeIndex >= 0 ? types[typeIndex].name : '请选择客户类型'}}
+          <text class="chev">›</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="u-card form-card">
+    <view class="fc-title">联系人信息</view>
+    <view class="field">
+      <text class="req">*</text>
+      <view class="f-label">联系人</view>
+      <input class="f-input" placeholder="请输入联系人姓名" value="{{contact}}" bindinput="onContact" />
+    </view>
+    <view class="field">
+      <text class="req">*</text>
+      <view class="f-label">联系电话</view>
+      <input class="f-input" type="number" placeholder="请输入联系电话" value="{{phone}}" bindinput="onPhone" />
+    </view>
+    <view class="field">
+      <view class="f-label">联系地址</view>
+      <textarea class="f-area" placeholder="请输入详细地址" value="{{address}}" bindinput="onAddress" />
+    </view>
+  </view>
+
+  <view class="u-card form-card">
+    <view class="fc-title">备注信息</view>
+    <view class="field">
+      <view class="f-label">备注</view>
+      <textarea class="f-area" placeholder="填写客户标签、结算方式等补充信息" value="{{remark}}" bindinput="onRemark" />
+    </view>
+  </view>
+
+  <view style="height: 30rpx"></view>
+  <view class="sticky-action">
+    <button class="u-btn" bindtap="onSave">保存客户资料</button>
+  </view>
+</view>

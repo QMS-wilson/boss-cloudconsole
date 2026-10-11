@@ -1,0 +1,72 @@
+<view class="page tab-page profile-page">
+  <view class="profile-body">
+    <view class="u-card profile-card">
+      <view class="avatar">{{avatarChar}}</view>
+      <view class="p-info">
+        <view class="p-name">{{userName || '微信老板'}}</view>
+        <view class="p-role">{{roleText}}</view>
+      </view>
+    </view>
+
+    <view class="u-card target">
+      <view class="target-head">
+        <text>当月营业额</text>
+        <text class="target-num">本月已开 {{monthCount}} 单</text>
+      </view>
+      <view class="month-amount">¥{{monthAmountText}}</view>
+      <view class="target-foot">
+        <text>销售单含税口径，来自本机账套</text>
+      </view>
+    </view>
+
+    <view class="u-card activity">
+      <view class="sec-title">最近单据</view>
+      <view class="u-divider"></view>
+      <view wx:if="{{!recentOrders.length}}" class="act-empty">本月暂无销售单</view>
+      <view
+        class="act-row"
+        wx:for="{{recentOrders}}"
+        wx:key="bill_no"
+        data-no="{{item.bill_no}}"
+        hover-class="act-h"
+        bindtap="onOpen"
+      >
+        <view class="act-left">
+          <view class="act-no">{{item.bill_no}}</view>
+          <view class="act-time">{{item.timeText}}</view>
+        </view>
+        <text class="u-status {{item.statusClass}}">{{item.statusText}}</text>
+        <text class="act-amount">{{item.amountText}}</text>
+      </view>
+    </view>
+
+    <view class="u-card settings">
+      <view class="set-row">
+        <text>连接状态</text>
+        <text class="state {{storeOnline ? 'ok' : 'off'}}"><view class="dot {{storeOnline ? 'on' : ''}}"></view>{{storeOnline ? '已连接' : '未连接'}}</text>
+      </view>
+      <view class="set-row">
+        <text>当前店铺</text>
+        <text class="store-name">{{storeTitle}}</text>
+      </view>
+      <view class="set-row" wx:if="{{storeCount > 1}}" hover-class="row-h" bindtap="onSwitchStore">
+        <text>切换店铺</text>
+        <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="set-row" hover-class="row-h" bindtap="onRecheck">
+        <text>重新检查授权</text>
+        <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="set-row" hover-class="row-h" bindtap="onCopyOpenid">
+        <text>复制 openid</text>
+        <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="set-row">
+        <text>关于本应用</text>
+        <text class="ver">v3.2.0 <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" /></text>
+      </view>
+    </view>
+
+    <button class="logout" hover-class="logout-h" bindtap="onLogout">退出登录</button>
+  </view>
+</view>

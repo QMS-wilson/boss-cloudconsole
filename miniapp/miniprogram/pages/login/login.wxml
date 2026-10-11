@@ -1,0 +1,61 @@
+<view class="page login-page">
+  <view class="brand">
+    <view class="logo">CRM</view>
+    <view class="brand-name">CRM 移动销售端</view>
+    <view class="brand-sub">查单 · 开单 · 客户 · 产品</view>
+  </view>
+
+  <!-- 登录中 -->
+  <view wx:if="{{state === 'loading'}}" class="center">
+    <view class="spinner"></view>
+    <view class="hint">正在获取微信身份…</view>
+    <view class="sub">登录是静默的，无需任何操作</view>
+  </view>
+
+  <!-- 出错 -->
+  <view wx:elif="{{state === 'error'}}" class="center">
+    <view class="err-msg">{{message}}</view>
+    <button class="btn primary" bindtap="onRetry">重试</button>
+
+    <block wx:if="{{showTestOpenid}}">
+      <view class="divider">开发模式（云端未启用微信登录）</view>
+      <view class="sub">粘贴已绑定的测试 openid 后进入，正式发布后此入口会自动关闭。</view>
+      <input class="input" placeholder="输入测试 openid" value="{{testOpenid}}" bindinput="onTestInput" />
+      <button class="btn ghost" bindtap="onGoTest" disabled="{{!testOpenid}}">用测试 openid 进入</button>
+    </block>
+  </view>
+
+  <!-- 未绑定 -->
+  <view wx:elif="{{state === 'unbound'}}" class="center">
+    <view class="unbound-title">尚未绑定店铺</view>
+    <view class="sub">请把下方 openid 发给管理员，在云端后台「老板授权」绑定后点击重新检查。</view>
+    <view class="openid-box" bindtap="onCopy">
+      <view class="openid">{{openid}}</view>
+    </view>
+    <button class="btn primary" bindtap="onCopy">复制 openid</button>
+    <button class="btn ghost" bindtap="onRecheck">重新检查（绑定后进入）</button>
+  </view>
+
+  <!-- 多家店铺选择 -->
+  <view wx:elif="{{state === 'choose'}}" class="choose">
+    <view class="choose-title">选择店铺</view>
+    <view class="sub">检测到你有 {{stores.length}} 家店铺的访问权限</view>
+    <view
+      class="store-card"
+      wx:for="{{stores}}"
+      wx:key="name"
+      data-index="{{index}}"
+      hover-class="store-h"
+      bindtap="onChooseStore"
+    >
+      <view class="store-info">
+        <view class="store-title">{{item.title}}</view>
+        <view class="store-sub">{{item.name}} · {{item.agent}}</view>
+      </view>
+      <view class="store-state {{item.online ? 'ok' : 'off'}}">
+        <view class="dot {{item.online ? 'on' : ''}}"></view>
+        {{item.online ? '在线' : '离线'}}
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,54 @@
+<view class="page tab-page customers-page">
+  <view class="search">
+    <image src="/assets/icons/search.svg" mode="aspectFit" />
+    <input
+      class="search-input"
+      placeholder="输入客户名称 / 编号 / 拼音查询"
+      value="{{keyword}}"
+      confirm-type="search"
+      bindinput="onKeyword"
+      bindconfirm="onSearch"
+    />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+
+  <view class="cust-body">
+    <view wx:if="{{loading}}" class="u-loading">搜索中…</view>
+    <view wx:elif="{{!rows.length}}" class="u-empty">
+      <view>{{searched ? '没有匹配的客户' : '正在加载客户…'}}</view>
+    </view>
+
+    <view
+      class="client"
+      wx:for="{{rows}}"
+      wx:key="code"
+      data-code="{{item.code}}"
+      hover-class="client-h"
+      bindtap="onOpen"
+    >
+      <view class="client-head">
+        <view class="c-name">{{item.name}}</view>
+        <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="u-divider"></view>
+      <view class="client-meta">
+        <text>{{item.code}}{{item.category ? ' · ' + item.category : ''}}</text>
+        <text class="trace" wx:if="{{item.trace201}}">最近销价</text>
+      </view>
+      <view class="client-data">
+        <view class="cd-item">
+          <text>累计销售额</text>
+          <text class="cd-value">¥{{item.saleText}}</text>
+        </view>
+        <view class="cd-item">
+          <text>待收账款</text>
+          <text class="cd-value {{item.due > 0 ? 'due' : 'ok'}}">¥{{item.dueText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="fab" hover-class="fab-hover" bindtap="onCreate">
+    <image src="/assets/icons/plus.svg" mode="aspectFit" />
+  </view>
+</view>

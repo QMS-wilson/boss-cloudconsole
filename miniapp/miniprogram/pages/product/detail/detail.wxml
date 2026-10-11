@@ -1,0 +1,49 @@
+<view class="page product-detail">
+  <view class="u-card form-card">
+    <view class="fc-title">基本信息</view>
+    <view class="field">
+      <text class="req">*</text>
+      <view class="f-label">商品名称</view>
+      <input class="f-input" placeholder="请输入商品名称" value="{{name}}" data-field="name" bindinput="onField" />
+    </view>
+    <view class="field">
+      <view class="f-label">商品编号</view>
+      <input class="f-input" placeholder="新增时填写，保存后不可改" value="{{hpbh}}" disabled="{{!isNew}}" data-field="hpbh" bindinput="onField" />
+    </view>
+    <view class="field">
+      <view class="f-label">规格/型号</view>
+      <input class="f-input" placeholder="请输入规格" value="{{spec}}" data-field="spec" bindinput="onField" />
+    </view>
+    <view class="field">
+      <view class="f-label">单位</view>
+      <input class="f-input" placeholder="如：支/盒/件" value="{{unit}}" data-field="unit" bindinput="onField" />
+    </view>
+  </view>
+
+  <view class="u-card form-card">
+    <view class="fc-title">价格信息</view>
+    <view class="field">
+      <view class="f-label">* 销售单价</view>
+      <input class="f-input" type="digit" placeholder="默认销售价（D_SJ1）" value="{{salePriceText}}" data-field="sale" bindinput="onField" />
+    </view>
+    <view class="field">
+      <view class="f-label">参考成本/进价</view>
+      <input class="f-input" type="digit" placeholder="可不填" value="{{costText}}" data-field="cost" bindinput="onField" />
+    </view>
+  </view>
+
+  <view class="u-card form-card">
+    <view class="fc-title">库存信息</view>
+    <view class="field">
+      <view class="f-label">当前库存 (不可编辑)</view>
+      <input class="f-input" value="{{stockText}}" disabled />
+    </view>
+  </view>
+
+  <view style="height: 30rpx"></view>
+  <view class="sticky-action">
+    <button class="u-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="onSave">
+      {{isNew ? '保存新增' : '保存修改'}}
+    </button>
+  </view>
+</view>

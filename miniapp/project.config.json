@@ -1,0 +1,49 @@
+{
+  "description": "CRM 移动销售端",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "appid": "wx6199e73d2fa6bd59",
+  "projectname": "v3-sales-miniapp",
+  "libVersion": "2.32.3",
+  "setting": {
+    "useCompilerPlugins": [
+      "typescript",
+      "sass"
+    ],
+    "es6": true,
+    "enhance": true,
+    "minified": false,
+    "postcss": false,
+    "minifyWXML": true,
+    "minifyWXSS": true,
+    "uploadWithSourceMap": true,
+    "ignoreUploadUnusedFiles": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "sassSetting": {
+      "sassCommonUseFilePath": "global.sass",
+      "scssCommonUseFilePath": "global.scss"
+    }
+  },
+  "simulatorType": "wechat",
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
+}

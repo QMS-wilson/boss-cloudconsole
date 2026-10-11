@@ -1,0 +1,288 @@
+.edit-form {
+  padding-bottom: 220rpx;
+  box-sizing: border-box;
+}
+
+.form-main {
+  padding: 30rpx 32rpx 0;
+}
+
+.bill-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 34rpx;
+}
+
+.bh-no {
+  font-size:28rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.label {
+  color: #536074;
+  font-size:32rpx;
+  font-weight: 600;
+  margin: 10rpx 6rpx 20rpx;
+}
+
+.customer-select {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  min-height: 128rpx;
+}
+
+.row-h {
+  opacity: 0.8;
+}
+
+.cs-icon {
+  width: 52rpx;
+  height: 52rpx;
+  flex: none;
+}
+
+.cs-name {
+  flex: 1;
+  min-width: 0;
+  font-size:34rpx;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cs-right {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  color: #9aa5b6;
+  font-size: 26rpx;
+  flex: none;
+}
+
+.chev {
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.form-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 30rpx 6rpx 20rpx;
+  color: #59667a;
+  font-size: 32rpx;
+}
+
+.form-label .fl-title {
+  font-weight: 600;
+  font-size: 30rpx;
+}
+
+.fl-sub {
+  color: #9aa5b6;
+  font-size: 24rpx;
+}
+
+.product-line {
+  margin-bottom: 26rpx;
+}
+
+.product-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.ph-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.p-name {
+  font-size:32rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.p-spec {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-top: 6rpx;
+}
+
+.trash {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.trash image {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.product-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2rpx solid #edf0f3;
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  color: #59667a;
+  font-size: 28rpx;
+}
+
+.pc-price text {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 26rpx;
+}
+
+.pc-price .unit {
+  font-weight: 400;
+  color: #98a3b4;
+  margin-left: 6rpx;
+}
+
+.counter {
+  display: flex;
+  height: 84rpx;
+  border: 2rpx solid #dce1e8;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ct-btn {
+  width: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #566274;
+}
+
+.ct-btn.plus {
+  background: #eef5ff;
+  color: #1677ff;
+}
+
+.ct-input {
+  width: 110rpx;
+  height: 100%;
+  text-align: center;
+  background: #f5f6f8;
+  color: #263246;
+  font-size:30rpx;
+  font-weight: 600;
+}
+
+.product-sub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  color: #9aa5b6;
+  font-size: 26rpx;
+}
+
+.ps-amount {
+  color: #1677ff;
+  font-weight: 600;
+  font-size: 24rpx;
+}
+
+.hint-line {
+  margin-top: 16rpx;
+  padding: 14rpx 18rpx;
+  background: #fff8e4;
+  color: #b7791f;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+
+.add-product {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+  height: 116rpx;
+  border: 4rpx dashed #1677ff;
+  border-radius: 26rpx;
+  color: #1677ff;
+  font-size:30rpx;
+  font-weight: 600;
+  margin: 26rpx 0;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.add-product image {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.add-h {
+  opacity: 0.75;
+}
+
+.note-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 220rpx;
+  border: 2rpx solid #dce1e8;
+  border-radius: 28rpx;
+  padding: 26rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  background: #fff;
+  color: #2e394b;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #59667a;
+  font-size: 28rpx;
+  margin-top: 40rpx;
+}
+
+.total-right {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.total-right text {
+  color: #ff4d22;
+  font-size:50rpx;
+  font-weight: 700;
+}
+
+.sticky-action {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 2rpx solid #e3e7ed;
+  z-index: 30;
+}
+
+.sticky-action .u-btn {
+  width: 100%;
+}
+
+.btn-h {
+  opacity: 0.9;
+}

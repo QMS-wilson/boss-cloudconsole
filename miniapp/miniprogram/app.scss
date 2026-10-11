@@ -1,0 +1,160 @@
+/* CRM 移动销售端 · 全局设计（对照微信小程序设计稿） */
+page {
+  background: #f6f7f9;
+  color: #1f2937;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+}
+
+/* 品牌色 */
+.c-primary { color: #1677ff; }
+.c-orange { color: #ff4d22; }
+.c-danger { color: #ff4d4f; }
+.c-muted { color: #98a3b4; }
+
+/* 白卡片 */
+.u-card {
+  background: #ffffff;
+  border-radius: 34rpx;
+  padding: 38rpx 40rpx;
+  box-sizing: border-box;
+  margin-bottom: 26rpx;
+}
+
+.u-btn {
+  border: 0;
+  border-radius: 34rpx;
+  background: #1677ff;
+  color: #ffffff;
+  font-size:36rpx;
+  font-weight: 700;
+  height: 124rpx;
+  line-height: 124rpx;
+  padding: 0;
+  box-shadow: 0 10rpx 28rpx rgba(22, 119, 255, 0.22);
+}
+
+.u-btn::after { border: 0; }
+
+.u-btn.ghost {
+  background: #ffffff;
+  color: #1677ff;
+  border: 4rpx solid #1677ff;
+  box-shadow: none;
+  line-height: 116rpx;
+  box-sizing: border-box;
+}
+
+.u-btn.sm {
+  display: inline-block;
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 30rpx;
+  border-radius: 20rpx;
+  font-size: 28rpx;
+}
+
+.u-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 28rpx;
+  padding: 120rpx 40rpx;
+  line-height: 1.7;
+}
+
+.u-loading {
+  text-align: center;
+  color: #9ca3af;
+  padding: 100rpx 0;
+}
+
+.u-divider {
+  height: 2rpx;
+  background: #edf0f3;
+}
+
+.u-title {
+  font-size:38rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.u-sub {
+  font-size: 26rpx;
+  color: #8c98aa;
+  line-height: 1.6;
+}
+
+/* 状态徽章 */
+.u-status {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: 10rpx;
+  font-size:24rpx;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.u-status.done {
+  color: #37bf18;
+  background: #f1fbea;
+}
+
+.u-status.waiting {
+  color: #ffad16;
+  background: #fff8e4;
+}
+
+.u-status.disabled {
+  color: #98a3b4;
+  background: #f1f3f7;
+}
+
+/* 页面留白（tab 页给自定义底部导航让位） */
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.page.tab-page {
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+}
+
+/* 通用空状态/浮层 */
+.fab {
+  position: fixed;
+  right: 36rpx;
+  bottom: calc(200rpx + env(safe-area-inset-bottom));
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #1677ff;
+  color: #ffffff;
+  border: 6rpx solid #f6f7f9;
+  box-shadow: 0 16rpx 40rpx rgba(22, 119, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.fab image {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.fab-hover {
+  opacity: 0.85;
+}
+
+/* 开发中标签 */
+.u-todo-tag {
+  display: inline-block;
+  font-size: 20rpx;
+  color: #b7791f;
+  background: #fff8e4;
+  border-radius: 8rpx;
+  padding: 2rpx 10rpx;
+  margin-left: 8rpx;
+  vertical-align: middle;
+}

@@ -1,0 +1,39 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/home/home",
+    "pages/sales/sales",
+    "pages/customers/customers",
+    "pages/profile/profile",
+    "pages/order/detail/detail",
+    "pages/order/create/create",
+    "pages/order/edit/edit",
+    "pages/customer/detail/detail",
+    "pages/customer/create/create",
+    "pages/pick/customer/customer",
+    "pages/product/list/list",
+    "pages/product/detail/detail",
+    "pages/report/report"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "移动销售端",
+    "backgroundColor": "#f6f7f9"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#9ca7b6",
+    "selectedColor": "#1677ff",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/home/home", "text": "首页" },
+      { "pagePath": "pages/sales/sales", "text": "销售" },
+      { "pagePath": "pages/customers/customers", "text": "客户" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

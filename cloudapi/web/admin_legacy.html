@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V3 云端后台管理</title>
+<style>
+:root { --brand:#2563eb; --bg:#f2f4f8; --card:#fff; --line:#e5e8ef; --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --bad:#dc2626; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:14px; }
+button { font-family:inherit; }
+.layout { display:flex; min-height:100vh; }
+aside { width:208px; background:#111827; color:#d1d5db; padding:14px 10px; flex:none; display:flex; flex-direction:column; }
+.logo { color:#fff; font-size:16px; font-weight:700; padding:6px 10px 16px; display:flex; align-items:center; gap:8px; }
+.logo .dot { width:10px; height:10px; border-radius:50%; background:#22c55e; display:inline-block; }
+nav a { display:flex; align-items:center; gap:9px; padding:9px 12px; margin:2px 0; border-radius:8px; color:#d1d5db; text-decoration:none; cursor:pointer; }
+nav a:hover { background:#1f2937; color:#fff; }
+nav a.active { background:var(--brand); color:#fff; }
+nav .grow { flex:1; }
+main { flex:1; min-width:0; padding:18px 22px 40px; }
+.topbar { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.topbar h1 { font-size:19px; margin:0; flex:1; }
+.chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:12px; font-size:12px; background:#eef2ff; color:var(--brand); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+.card h2 { margin:0 0 12px; font-size:15px; display:flex; align-items:center; gap:8px; }
+.muted { color:var(--muted); }
+.small { font-size:12px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+input, select, textarea { padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; background:#fff; color:var(--text); }
+textarea { font-family:Consolas,monospace; width:100%; resize:vertical; }
+input:focus, select:focus, textarea:focus { outline:2px solid #bfdbfe; border-color:var(--brand); }
+label { display:block; margin:8px 0 4px; font-size:13px; color:#374151; }
+button.btn { padding:8px 16px; border:0; border-radius:8px; background:var(--brand); color:#fff; cursor:pointer; font-size:13px; }
+button.btn.gray { background:#6b7280; }
+button.btn.green { background:#16a34a; }
+button.btn.red { background:#dc2626; }
+button.btn.ghost { background:transparent; color:var(--brand); border:1px solid #bfdbfe; }
+button.btn.link { background:none; color:var(--brand); padding:4px 6px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; word-break:break-all; }
+th { color:var(--muted); font-weight:600; white-space:nowrap; }
+code { background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12px; }
+pre { background:#0f172a; color:#a5f3fc; padding:12px; border-radius:10px; overflow:auto; font-size:12px; max-height:380px; }
+.tag { display:inline-block; padding:2px 9px; border-radius:11px; font-size:12px; white-space:nowrap; }
+.tag.on { background:#dcfce7; color:#15803d; }
+.tag.off { background:#fee2e2; color:#b91c1c; }
+.stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+.stat .num { font-size:26px; font-weight:700; }
+.stat .lbl { color:var(--muted); font-size:12px; margin-top:2px; }
+.banner { border-radius:12px; padding:12px 16px; margin-bottom:14px; border:1px solid #fde68a; background:#fffbeb; font-size:13px; }
+.banner.ok { border-color:#bbf7d0; background:#f0fdf4; }
+.banner.bad { border-color:#fecaca; background:#fef2f2; }
+.steps { counter-reset:st; }
+.steps .step { display:flex; gap:10px; padding:7px 0; }
+.steps .step::before { counter-increment:st; content:counter(st); flex:none; width:20px; height:20px; border-radius:50%; background:var(--brand); color:#fff; font-size:12px; text-align:center; line-height:20px; }
+.bar-chart { display:flex; align-items:flex-end; gap:12px; height:110px; padding-top:8px; }
+.bar-chart .col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; height:100%; }
+.bar-chart .bar { width:100%; max-width:44px; background:var(--brand); border-radius:5px 5px 0 0; min-height:4px; }
+#toastWrap { position:fixed; right:20px; top:20px; z-index:300; display:flex; flex-direction:column; gap:8px; }
+.toast { background:#111827; color:#fff; padding:10px 16px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.2); font-size:13px; max-width:360px; }
+.toast.err { background:#b91c1c; }
+.modal-mask { position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; z-index:200; }
+.modal-mask.show { display:flex; }
+.modal { background:#fff; border-radius:14px; padding:22px; width:460px; max-width:92vw; max-height:86vh; overflow:auto; }
+.modal h3 { margin:0 0 12px; font-size:16px; }
+.op-preset { border:1px solid var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; background:#fff; }
+.op-preset:hover { border-color:var(--brand); background:#eff6ff; }
+.op-preset .t { font-weight:600; }
+hr { border:0; border-top:1px solid var(--line); margin:14px 0; }
+</style>
+</head>
+<body>
+
+<div id="loginView" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0f172a;z-index:400">
+  <div style="background:#fff;padding:30px 34px;border-radius:16px;width:360px">
+    <div style="font-size:19px;font-weight:700;margin-bottom:6px">V3 云端后台</div>
+    <div class="muted small" style="margin-bottom:16px">接入与运营管理控制台</div>
+    <label>管理密码</label>
+    <input type="password" id="pwd" style="width:100%" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter')login()">
+    <div class="muted small" style="margin:8px 0 12px">开发默认：admin123（登录后可在「系统设置」修改）</div>
+    <button class="btn" style="width:100%" onclick="login()">登 录</button>
+    <div id="loginErr" style="color:var(--bad);margin-top:10px;font-size:13px"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+<div class="layout">
+  <aside>
+    <div class="logo"><span id="statusDot" class="dot" style="background:#9ca3af"></span> V3 云端后台</div>
+    <nav id="nav">
+      <a data-v="overview" class="active">概览</a>
+      <a data-v="merchants">商户</a>
+      <a data-v="agents">本地 Agent</a>
+      <a data-v="tokens">客户端令牌</a>
+      <a data-v="users">老板授权</a>
+      <a data-v="accounts">应用账号</a>
+      <a data-v="audit">审计日志</a>
+      <a data-v="rpc">调试工具</a>
+      <a data-v="settings">系统设置</a>
+    </nav>
+    <div class="grow"></div>
+    <button class="btn ghost" style="width:100%" onclick="showHelp()">使用帮助</button>
+    <button class="btn gray" style="width:100%;margin-top:6px" onclick="logout()">退出登录</button>
+  </aside>
+
+  <main>
+    <div class="topbar"><h1 id="pageTitle">概览</h1><span id="lastUpd" class="muted small"></span></div>
+
+    <!-- 概览 -->
+    <section id="v-overview">
+      <div id="ovWarn"></div>
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="stat"><div class="num" id="stOnline">-</div><div class="lbl">在线 Agent</div></div>
+        <div class="stat"><div class="num" id="stClients">-</div><div class="lbl">客户端令牌</div></div>
+        <div class="stat"><div class="num" id="stToday">-</div><div class="lbl">今日请求数</div></div>
+        <div class="stat"><div class="num" id="stTotal">-</div><div class="lbl">累计请求（成功 <span id="stOk">-</span> / 失败 <span id="stFail">-</span>）</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>近 7 天请求量</h2>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="card">
+          <h2>常用操作</h2>
+          <div class="row" style="gap:8px">
+            <button class="btn" onclick="go('rpc')">查单据 / 测试</button>
+            <button class="btn green" onclick="go('tokens')">发放令牌</button>
+            <button class="btn gray" onclick="go('agents')">管理 Agent</button>
+          </div>
+          <div id="opTop" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 应用账号（App/多端账号密码登录） -->
+    <section id="v-accounts" style="display:none">
+      <div class="card">
+        <h2>新增 / 保存应用账号</h2>
+        <div class="row">
+          <input id="acUser" placeholder="登录账号，至少 3 位，如 shiwang" style="min-width:220px">
+          <input id="acName" placeholder="显示名称，如：石湾同达-张老板" style="min-width:220px">
+          <input id="acPwd" type="password" placeholder="密码（新增必填，至少 6 位）" style="min-width:220px">
+        </div>
+        <div style="margin-top:8px">
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="acAll"> 全部店铺通用访问</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;margin-left:14px"><input type="checkbox" id="acDisabled"> 禁用该账号</label>
+        </div>
+        <div id="acClients" class="row" style="gap:10px;margin-top:8px"></div>
+        <div style="margin-top:10px"><button class="btn green" onclick="saveAccount()">保存应用账号</button></div>
+        <div class="muted small" style="margin-top:8px">App 使用：POST /api/v1/auth/login，body <code>{"provider":"password","account":"...","password":"..."}</code>，成功后拿 accessToken 调业务接口。</div>
+      </div>
+      <div class="card">
+        <h2>应用账号列表</h2>
+        <table><thead><tr><th>账号</th><th>名称</th><th>可访问店铺</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+        <tbody id="acBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- Agent -->
+    <!-- 商户 -->
+    <section id="v-merchants" style="display:none">
+      <div class="card">
+        <h2>开通新商户（一次点完：商户 + Agent 密钥 + 客户端 + 应用账号）</h2>
+        <div class="row">
+          <input id="mcCode" placeholder="商户码，如 yedian" style="min-width:200px">
+          <input id="mcTitle" placeholder="商户展示名，如 也店" style="min-width:190px">
+          <select id="mcAccess" style="min-width:160px">
+            <option value="auth">auth 必须登录</option>
+            <option value="guest">guest 免登录</option>
+          </select>
+          <input id="mcMinVer" placeholder="最低 Agent 版本 0.2.0（留空不强制）" style="min-width:210px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="mcDbHint" placeholder="账套名提示（装机填 sql.database）" style="min-width:230px">
+          <input id="mcUser" placeholder="首个应用账号（留空 = 商户码-admin）" style="min-width:230px">
+          <button class="btn" onclick="createMerchant()">开通</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">
+          ★ <b>商户码 = 云端 Agent 名 = H5 的 URL 前缀</b>，三处同一个字符串；一家多分店要真隔离就再发一个码。
+          开通后按 <code>用户文档/开通新商户-runbook.md</code> 装机。命令行版等价于
+          <code>scripts/provision-merchant.py</code>。名字被占用时整条拒绝，不会换掉在线那家的密钥。
+        </div>
+        <div id="mcBundle"></div>
+      </div>
+      <div class="card">
+        <h2>商户表 <button class="btn link" onclick="loadState().then(loadMerchants)">刷新</button></h2>
+        <table><thead><tr><th>商户码</th><th>显示名</th><th>Agent</th><th>最低版本</th>
+          <th>客户端</th><th>应用账号</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody id="mcBody"></tbody></table>
+        <div class="muted small" style="margin-top:8px">
+          「停用」= 该商户所有请求立刻 403 MERCHANT_DISABLED，密钥与客户端都留着、随时可启用；
+          「下线删除」会连同名 Agent 登记一起删，需名下没有客户端。
+        </div>
+      </div>
+    </section>
+
+    <section id="v-agents" style="display:none">
+      <div class="card">
+        <h2>新增 Agent 登记</h2>
+        <div class="row">
+          <input id="agName" placeholder="Agent 名称，如 shiwantongda（建议用账套名）" style="min-width:240px">
+          <input id="agSecret" placeholder="密钥（留空自动生成）" style="min-width:220px">
+          <button class="btn gray" onclick="genSecret()">生成密钥</button>
+          <button class="btn" onclick="saveAgent()">保存登记</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">登记后把名称+密钥填到客户电脑的 v3agent/config.json（agent.name / agent.secret），启动 Agent 即自动接入。</div>
+      </div>
+      <div class="card">
+        <h2>Agent 列表 <button class="btn link" onclick="loadAgents()">刷新</button></h2>
+        <table><thead><tr><th>名称</th><th>状态</th><th>版本</th><th>op 数</th><th>装机 / 主机名</th><th>密钥</th><th>最近活跃</th><th>操作</th></tr></thead>
+        <tbody id="agBody"></tbody></table>
+      </div>
+      <div class="card"><h2>客户电脑接入步骤（照做即可）</h2>
+        <div class="steps">
+          <div class="step">在 D:\v3-wechat 目录放好 Agent 代码（或打包 exe）。</div>
+          <div class="step">把本页登记的「名称+密钥」填入 v3agent 的 config.json（agent.name / agent.secret）。</div>
+          <div class="step">服务器地址填云端 wss 地址：<code>wss://你的域名/ws/agent</code></div>
+          <div class="step">双击启动（开发机直接运行 <code>py -m v3agent.main --ws</code>）。</div>
+          <div class="step">回到本页，状态变为「在线」即接入成功。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 令牌 -->
+    <section id="v-tokens" style="display:none">
+      <div class="card">
+        <h2>发放客户端令牌</h2>
+        <div class="row">
+          <input id="tkTitle" placeholder="店铺显示名，如：石湾同达（小程序里看到）" style="min-width:220px">
+          <input id="tkName" placeholder="客户端内部名，如：shiwantongda" style="min-width:200px">
+          <select id="tkAgent" style="min-width:170px"></select>
+          <select id="tkAccess" style="min-width:170px">
+            <option value="guest">通用访客（免登录）</option>
+            <option value="auth">仅授权老板访问</option>
+          </select>
+          <button class="btn green" onclick="addToken()">生成令牌</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">令牌 = 小程序访问凭证。「通用访客」=持令牌即可用（适合未接入微信登录前）；「仅授权老板」=到「老板授权」页把客户端勾给对应 openid。一个老板可被授权多个客户端。</div>
+      </div>
+      <div class="card">
+        <h2>令牌列表 <button class="btn gray" onclick="loadRecent()">查看最近登录的微信用户</button></h2>
+        <table><thead><tr><th>名称</th><th>绑定 Agent</th><th>访问模式</th><th>授权老板</th><th>令牌</th><th>操作</th></tr></thead>
+        <tbody id="tkBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- 老板授权 -->
+    <section id="v-users" style="display:none">
+      <div class="card">
+        <h2>新增老板（openid）</h2>
+        <div class="row">
+          <input id="usName" placeholder="名称，如：石湾同达-张老板" style="min-width:200px">
+          <input id="usOpenid" placeholder="微信 openid（可先让老板登录一次，从令牌页复制）" style="min-width:260px">
+          <button class="btn gray" onclick="loadRecent('usOpenid')">从最近登录填入</button>
+        </div>
+        <div style="margin-top:8px">
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="usAll"> 全部客户端通用访问（新增客户端也自动可用）</label>
+        </div>
+        <div id="usClients" class="row" style="gap:10px;margin-top:8px"></div>
+        <div style="margin-top:10px"><button class="btn green" onclick="addUser()">保存老板授权</button></div>
+      </div>
+      <div class="card">
+        <h2>老板列表</h2>
+        <table><thead><tr><th>名称</th><th>openid</th><th>可访问客户端</th><th>最近登录</th><th>操作</th></tr></thead>
+        <tbody id="usBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- 审计 -->
+    <section id="v-audit" style="display:none">
+      <div class="card">
+        <h2>查询条件</h2>
+        <div class="row">
+          <input id="auOp" placeholder="操作，如 bill.get" style="width:150px">
+          <input id="auAgent" placeholder="Agent" style="width:140px">
+          <input id="auClient" placeholder="客户端" style="width:140px">
+          <select id="auOk" style="width:110px"><option value="">全部结果</option><option value="true">成功</option><option value="false">失败</option></select>
+          <button class="btn" onclick="loadAudit()">查询</button>
+          <span class="muted small">最多显示最近 2000 条</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>审计日志</h2>
+        <table><thead><tr><th>时间</th><th>客户端</th><th>Agent</th><th>操作</th><th>结果</th><th>说明</th></tr></thead>
+        <tbody id="auBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- RPC 调试 -->
+    <section id="v-rpc" style="display:none">
+      <div class="card">
+        <h2>1. 选择目标和操作</h2>
+        <div class="row">
+          <select id="rpAgent" style="min-width:180px"></select>
+          <button class="btn gray" onclick="loadAgents()">刷新列表</button>
+        </div>
+        <div id="rpPresets" class="row" style="gap:8px;margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <h2>2. 参数（JSON）</h2>
+        <label>op：<input id="rpOp" list="opList" style="min-width:280px" oninput="showOpHelp()"><datalist id="opList"></datalist></label>
+        <div id="rpHelp" class="muted small" style="margin:6px 0"></div>
+        <textarea id="rpParams" rows="6"></textarea>
+        <div class="row">
+          <span class="muted small">超时（秒）</span><input id="rpTimeout" type="number" value="60" style="width:90px">
+          <button class="btn green" onclick="sendRpc()">执行请求</button>
+          <button class="btn gray" onclick="copyText('rpParams')">复制参数</button>
+        </div>
+      </div>
+      <div class="card"><h2>3. 返回结果</h2><pre id="rpResult">填写参数后点「执行请求」。</pre></div>
+      <div class="card">
+        <h2>4. 异步任务接口（REST，需要店铺令牌）</h2>
+        <div class="muted small">提交任务：POST /api/v1/tasks</div>
+        <pre>{
+  "op": "report.sales.summary",
+  "params": { "date_from": "2026-09-01", "date_to": "2026-09-10" },
+  "timeout": 60
+}</pre>
+        <div class="muted small">查询任务：GET /api/v1/tasks/{taskId}</div>
+        <pre>// 返回示例
+{ "ok": true, "data": { "taskId": "631138c9…", "status": "success", "result": { "ok": true, "data": { … } } } }</pre>
+        <div class="muted small">任务列表：GET /api/v1/tasks?limit=20；请求需带 Authorization: Bearer &lt;店铺令牌&gt; + X-Openid。</div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section id="v-settings" style="display:none">
+      <div class="card">
+        <h2>基础设置</h2>
+        <div style="max-width:460px">
+          <label>RPC 默认超时（秒，5-300）</label>
+          <input id="stTimeout" type="number" style="width:100%">
+          <label>修改后台密码（留空表示不修改）</label>
+          <input id="stPwd" type="password" style="width:100%" placeholder="新密码（至少 6 位）">
+          <div style="height:10px"></div>
+          <button class="btn" onclick="saveSettings()">保存设置</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>微信登录与小程序入口</h2>
+        <div style="max-width:520px">
+          <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="stWxEnabled"> 启用微信登录（code → openid）</label>
+          <label>小程序 AppID</label>
+          <input id="stWxAppid" style="width:100%" placeholder="wxf85733bb9eed37a0">
+          <label>小程序 AppSecret（只存服务器；已设置时留空表示不修改）</label>
+          <input id="stWxSecret" type="password" style="width:100%" placeholder="已设置 / 填入新值">
+          <label>小程序入口令牌（登录与「我的店铺」查询用，改动后需同步小程序配置）</label>
+          <input id="stPortal" style="width:100%" placeholder="至少 8 位，建议用随机长串">
+          <div style="height:10px"></div>
+          <button class="btn" onclick="saveWxSettings()">保存微信设置</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">启用后老板打开小程序即可静默登录：未授权 → 显示 openid 待管理员绑定；1 家店 → 直接进入；多家店 → 弹窗选择。</div>
+      </div>
+      <div class="card"><h2>服务信息</h2><div id="svInfo" class="muted"></div></div>
+    </section>
+  </main>
+</div>
+</div>
+
+<!-- 帮助 -->
+<div class="modal-mask" id="helpMask">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <div class="muted small"><b>接入第一个本地 Agent</b>：到「本地 Agent」页 → 保存登记（会自动生成密钥）→ 把名称/密钥填进客户电脑的 config.json → 启动 → 本页状态变「在线」。</div>
+    <hr>
+    <div class="muted small"><b>让小程序能访问</b>：到「客户端令牌」页生成令牌；小程序请求云端时在 Header 带 <code>Authorization: Bearer &lt;令牌&gt;</code>，请求地址 <code>POST /api/v1/rpc</code>。</div>
+    <hr>
+    <div class="muted small"><b>Agent 一直离线？</b>：先看客户电脑能否访问云端（域名/防火墙），再查 config.json 的 relay_url 与密钥，最后看客户机 logs/agent.out.log。</div>
+    <hr>
+    <div class="muted small"><b>单据改不了？</b>：Agent 只允许改未审核、无收款/发货/对账/关联的单；已审核单据只读。详见 D:\v3-wechat\README.md。</div>
+    <div style="height:10px"></div>
+    <button class="btn" onclick="hideHelp()">知道了</button>
+  </div>
+</div>
+
+<!-- 通用小弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:16px">
+      <button class="btn gray" onclick="closeModal()">取消</button>
+      <button class="btn green" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let S = { agents: [], clients: [], conflicts: [], takeover_open: {}, rpc_timeout: 60 };
+let autoTimer = null, refreshing = false;
+let modalAction = null;
+
+const OPS = {
+  /* ---- 连接与状态 ---- */
+  "system.ping": { cat: "连接与状态", label: "连通性测试", desc: "Agent 是否正常响应", params: {},
+    help: "无参数。返回 {\"pong\": true} 说明 Agent 与数据库都正常。" },
+  "agent.info": { cat: "连接与状态", label: "查看 Agent 信息", desc: "名称、版本与支持的操作", params: {},
+    help: "无参数。返回 Agent 名称、版本与支持的全部 op 列表。" },
+
+  /* ---- 销售单 ---- */
+  "bill.get": { cat: "销售单", label: "查销售出库单", desc: "按系统单号查单头/明细/可否编辑", rest: "GET /api/v1/sales/{bill_no}", params: { bill_no: "XK00000039" },
+    help: "参数 bill_no：V3 系统单号（XK 开头）。返回整单明细，editable=false 时会给出原因（已审核/已收款/有关联等）。" },
+  "bill.list": { cat: "销售单", label: "销售单列表", desc: "按日期/客户列出单据", rest: "GET /api/v1/sales", params: { date_from: "2026-09-01", date_to: "2026-09-10", limit: 20 },
+    help: "date_from/date_to 含当天；customer 客户编号（可省）；state=0 只看正常单；limit 最大条数。" },
+  "salesbill.create": { cat: "销售单", label: "新建销售出库单", desc: "真实开单（未审核草稿）", rest: "POST /api/v1/sales", params: {
+      customer: "K01094", note: "调试开单", warehouse: "101-",
+      lines: [ { hpbh: "60108183", unit: "支", qty: 1 } ] },
+    help: "customer 客户编号；lines 至少一行，hpbh/unit/qty 必填，price 可省（按客户取价）；warehouse 默认 101- 主仓库。会真实写入 V3（未审核单），提交前自动做库存流水与合计自检。" },
+  "salesbill.update": { cat: "销售单", label: "修改销售出库单", desc: "改未审核单的数量/单价/明细/客户/备注", rest: "PUT /api/v1/sales/{bill_no}", params: {
+      bill_no: "XK00000039", header: { BZ_XS: "调试备注" } },
+    help: "只能改未审核、无收款/发货/对账/关联的单。改明细需先 bill.get 取回全部 lines（含 iden_guid），提交完整 lines 列表：改数量/单价改对应值，删行移除该行，加行用新 hpbh/unit/qty。不给 price 自动取价。" },
+
+  /* ---- 采购(进货) ---- */
+  "purchase.list": { cat: "采购", label: "采购单列表", desc: "按日期/供应商/状态列出进货单", rest: "GET /api/v1/purchases", params: { keyword: "", date_from: "2026-09-01", date_to: "2026-09-30", state: "pending", limit: 20, offset: 0 },
+    help: "V3 里采购单叫「进货单」，单号 JH 开头，表 JH/JHMX。keyword 支持单号/流水号/供应商编号/供应商名/备注；state=pending(未审核)|audited(已审核)|void(已作废)；date_from/date_to 含当天（不传=全部）。返回 items[]{bill_no,ndate,supplier{code,name},amount,qty,line_count,status,warehouse_name} + total/limit/offset/hasMore。" },
+  "purchase.get": { cat: "采购", label: "查采购单详情", desc: "整单：单头 + 明细 + 可否修改", rest: "GET /api/v1/purchases/{bill_no}", params: { bill_no: "JH00000017" },
+    help: "参数 bill_no：V3 进货单号（JH 开头）。返回 supplier/warehouse/totals/lines[]，editable=false 时会给出原因（已作废/已审核/已有付款/已有审核时间）。" },
+  "supplier.search": { cat: "采购", label: "供应商列表", desc: "空关键字返回全部（Gysdan）", rest: "GET /api/v1/suppliers", params: { keyword: "", limit: 20, offset: 0 },
+    help: "keyword 支持编号/名称/拼音/联系人/电话；为空即返回供应商列表。返回 code/name/contact/phone/tel/address/due/advance。口径与客户列表一致：StopUse=0 且排除占位行。" },
+  "supplier.get": { cat: "采购", label: "供应商详情", desc: "单供应商档案", rest: "GET /api/v1/suppliers/{code}", params: { code: "ces001" },
+    help: "返回联系人、手机、电话、传真、地址、开户行/账号、应付 J_Due、预付款 J_Advance、价格方案 PriceTypeJH。" },
+  "supplier.types": { cat: "采购", label: "供应商分类", desc: "GysType 分类表", rest: "GET /api/v1/supplier-types", params: {},
+    help: "无参数，返回 [{code,name}]，用于新建供应商时选分类。" },
+  "supplier.prices": { cat: "采购", label: "供应商进货价", desc: "Price_Gys 最近进价历史", rest: "GET /api/v1/suppliers/{code}/prices", params: { code: "ces001" },
+    help: "返回该供应商每个货品的最近进货价 D_Price / 含税价 D_PriceTax / 来源单号 LastStockBillNo，供采购编辑页带出最近进价。" },
+
+  /* ---- 客户 ---- */
+  "customer.search": { cat: "客户", label: "客户列表/搜索", desc: "空关键字返回列表，含应收/累计销售", rest: "GET /api/v1/customers", params: { keyword: "宏利源", limit: 20 },
+    help: "keyword 支持编号/名称/拼音；keyword 为空即返回客户列表。返回 code/name/category/contact/phone/address/due/sale_sum/price_trace。" },
+  "customer.get": { cat: "客户", label: "客户详情", desc: "单客户档案与往来数据", rest: "GET /api/v1/customers/{code}", params: { code: "K01094" },
+    help: "返回联系人、手机、电话、地址、备注、应收 J_Due、累计销售 J_SaleSUM、价格跟踪。" },
+  "customer.types": { cat: "客户", label: "客户类型", desc: "KhType 客户类别", rest: "GET /api/v1/customer-types", params: {},
+    help: "无参数，返回 [{code,name}]，用于新建客户时的类别选择。" },
+  "customer.save": { cat: "客户", label: "新增/修改客户", desc: "真实写库", rest: "POST/PUT /api/v1/customers", params: {
+      name: "调试客户", category: "K01-", contact: "张三", phone: "13800000000",
+      address: "测试地址", remark: "接口调试" },
+    help: "不传 code = 新增（自动生成 K 编号）；传 code = 修改。name 必填，其余可省。" },
+
+  /* ---- 商品 ---- */
+  "product.search": { cat: "商品", label: "商品列表/搜索", desc: "空关键字返回列表，含售价/库存", rest: "GET /api/v1/products", params: { keyword: "弹簧", limit: 20 },
+    help: "keyword 支持编号/名称/规格/拼音；为空返回商品列表。返回 hpbh/name/spec/unit/sale_price/stock。" },
+  "product.get": { cat: "商品", label: "商品详情", desc: "单位、价格与库存", rest: "GET /api/v1/products/{hpbh}", params: { hpbh: "60108183" },
+    help: "返回商品基本资料、默认单位、单位列表（UnitRate/单价）、销售价 D_SJ1、进价 D_JH、成本与库存。" },
+  "product.save": { cat: "商品", label: "新增/修改商品", desc: "真实写库", rest: "POST/PUT /api/v1/products", params: {
+      code: "T9999001", name: "调试商品", spec: "1*1", unit: "支", sale_price: 9.9, purchase_price: 5 },
+    help: "新增必须给 code；修改时 code 为商品编号。unit 会写入 HpdanUnit；BarcodeType=9 普通商品。" },
+
+  /* ---- 库存与取价 ---- */
+  "inventory.query": { cat: "库存与取价", label: "库存查询", desc: "按货品/关键字查库存（含负库存）", rest: "GET /api/v1/inventory", params: { keyword: "砂纸", limit: 20 },
+    help: "hpbh（精确编号）或 keyword（模糊）二选一即可；返回仓库、现存量与批次。" },
+  "price.resolve": { cat: "库存与取价", label: "客户取价", desc: "按客户价格方案取货品价格", rest: "GET /api/v1/price", params: { customer: "K01094", hpbh: "60108183", unit: "支" },
+    help: "规则：PriceTrace=201 先取最近销价(Price_Kh)，无则取默认价 D_SJ1，再无则 price=0 并标记 manual。unit 可省。" },
+
+  /* ---- 看板与报表 ---- */
+  "system.dashboard": { cat: "看板与报表", label: "经营看板", desc: "本月/今日销售与应收", rest: "GET /api/v1/dashboard/summary", params: { month_start: "2026-09-01", today: "2026-09-10" },
+    help: "返回 month_amount/today_amount/today_count/receivable_total；不传日期默认本月与今天。" },
+  "report.sales.summary": { cat: "看板与报表", label: "销售汇总", desc: "期间销售额/单数/均价", rest: "GET /api/v1/reports/sales-summary", params: { date_from: "2026-09-01", date_to: "2026-09-10" },
+    help: "可按 customer 客户编号过滤；返回 salesAmount/salesCount/averageBillAmount。" },
+  "report.sales.trend": { cat: "看板与报表", label: "销售趋势", desc: "按天/月汇总", rest: "GET /api/v1/reports/sales-trend", params: { date_from: "2026-09-01", date_to: "2026-09-10", granularity: "day" },
+    help: "granularity=day|month；返回 [{date,count,amount}]。" },
+  "report.customer.ranking": { cat: "看板与报表", label: "客户销售排行", desc: "期间客户销售排名", rest: "GET /api/v1/reports/customer-ranking", params: { date_from: "2026-01-01", date_to: "2026-09-10", limit: 20 },
+    help: "按销售金额倒序，返回 customerId/customerName/salesCount/salesAmount。" },
+  "report.product.ranking": { cat: "看板与报表", label: "商品销售排行", desc: "期间商品销量/金额排名", rest: "GET /api/v1/reports/product-ranking", params: { date_from: "2026-01-01", date_to: "2026-09-10", limit: 20 },
+    help: "按销售金额倒序，返回 productId/productName/spec/quantity/salesAmount。" },
+  "report.receivables.summary": { cat: "看板与报表", label: "应收汇总", desc: "客户应收余额列表", rest: "GET /api/v1/reports/receivables/summary", params: { keyword: "", only_receivable: true, limit: 20 },
+    help: "来自 Khdan.J_Due；only_receivable=true 只列有欠款客户；返回总额、客户数与明细。" },
+  "report.customer.product.detail": { cat: "看板与报表", label: "客户货品明细", desc: "某客户期间货品汇总", rest: "GET /api/v1/reports/customer-product-detail", params: { customer: "K01094", date_from: "2026-01-01", date_to: "2026-09-10", limit: 100 },
+    help: "返回该客户期间每个货品的数量、金额、单数、均价。" },
+  "report.customer.statement": { cat: "看板与报表", label: "客户往来对账单", desc: "期初/销售/收款/期末 + 流水", rest: "GET /api/v1/reports/customer-statement", params: { customer: "K01094", date_from: "2026-09-01", date_to: "2026-09-10" },
+    help: "期末应收取 Khdan.J_Due；当前账套无收款流水，paymentAmount=0，期初=期末-本期销售；items 为期间销售出货流水与滚动余额。" },
+
+  /* ---- 打印 ---- */
+  "print.salesbill": { cat: "打印与任务", label: "打印销售单", desc: "报文 / HTML / 调用默认打印机", rest: "POST /api/v1/print/salesbill", params: { bill_no: "XK00000039", mode: "html", copies: 1 },
+    help: "mode=payload 返回文本报文；mode=html 返回按 V3 Report_FormatSet 坐标生成的 HTML；mode=system 在 Agent 所在 Windows 电脑调用默认打印机。copies 为份数。" },
+  "print.format.get": { cat: "打印与任务", label: "获取V3打印格式", desc: "Report_BillList/Mapping/FormatSet", params: { bill_name: "销售出货单" },
+    help: "返回该单据的纸张宽度、分页、行高、表头/明细查询 SQL、字段映射与坐标布局（Ctrl_X/Y/W/字号/区域）。bill_name 可换购/销/盘点/调拨等。" },
+  "print.format.list": { cat: "打印与任务", label: "列出V3打印方案", desc: "HxSysReport 报表方案列表", params: { rpt_type: "BillXS", db: "AccMaster" },
+    help: "销售出货单 rpt_type=BillXS；AccMaster 有 8 个方案、TempUpSpRpt 有 49 个方案。返回名称/默认/自定义/版本/IDENCOL/定义字节/修改时间。" },
+  "print.format.def": { cat: "打印与任务", label: "取V3打印方案定义", desc: "ReportMachine 3.0 定义（可含文本）", params: { rpt_name: "销售出货单(折后价)", rpt_type: "BillXS", db: "AccMaster", include_text: true },
+    help: "返回方案元数据；include_text=true 提取内部可见字段串，include_definition=true 返回解压后定义的 base64。" },
+};
+
+async function api(path, method = "GET", body) {
+  const opt = { method, headers: {} };
+  if (body !== undefined) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const resp = await fetch(path, opt);
+  let data = {};
+  try { data = await resp.json(); } catch (e) {}
+  if (resp.status === 401) { onExpired(); throw new Error("unauthorized"); }
+  if (!resp.ok && !data.ok) throw new Error(data.detail || data.error?.message || JSON.stringify(data));
+  return data;
+}
+
+function toast(msg, isErr = false) {
+  const d = document.createElement("div");
+  d.className = "toast" + (isErr ? " err" : "");
+  d.textContent = msg;
+  $("toastWrap").appendChild(d);
+  setTimeout(() => d.remove(), 3600);
+}
+
+function onExpired() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } $("loginView").style.display = "flex"; $("app").style.display = "none"; }
+function showLogin() { onExpired(); }
+
+async function login() {
+  $("loginErr").textContent = "";
+  try {
+    await api("/api/admin/login", "POST", { password: $("pwd").value });
+    $("loginView").style.display = "none";
+    $("app").style.display = "block";
+    await boot();
+  } catch (e) { $("loginErr").textContent = e.message; }
+}
+
+async function logout() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  try { await api("/api/admin/logout", "POST", {}); } catch (e) {}
+  showLogin();
+}
+
+async function boot() {
+  await loadState();
+  await loadStats();
+  autoTimer = setInterval(() => { if ($("app").style.display !== "none") autoRefresh(); }, 5000);
+}
+
+async function autoRefresh() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    await loadState();
+    const v = currentView();
+    if (v === "overview") await loadStats();
+    if (v === "audit") await loadAudit();
+    if (v === "tokens") renderTokens();
+  } catch (e) {} finally { refreshing = false; }
+}
+
+function currentView() { return document.querySelector("nav a.active")?.dataset.v || "overview"; }
+function go(v) {
+  document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.v === v));
+  ["overview","merchants","agents","tokens","users","accounts","audit","rpc","settings"].forEach(x => $("v-" + x).style.display = x === v ? "" : "none");
+  const T = { overview: "概览", merchants: "商户", agents: "本地 Agent", tokens: "客户端令牌", users: "老板授权", accounts: "应用账号", audit: "审计日志", rpc: "调试工具", settings: "系统设置" };
+  $("pageTitle").textContent = T[v];
+  if (v === "overview") loadStats();
+  if (v === "merchants") loadMerchants();
+  if (v === "agents") loadAgents();
+  if (v === "tokens") { fillAgentSelects(); renderTokens(); }
+  if (v === "users") { fillAgentSelects(); renderUsers(); }
+  if (v === "audit") loadAudit();
+  if (v === "rpc") { fillAgentSelects(); renderRpcForm(); }
+  if (v === "accounts") { renderClientChecks("acClients", []); loadAccounts(); }
+  if (v === "settings") { fillAgentSelects(); loadSettings(); }
+}
+document.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => go(a.dataset.v)));
+
+/* ---------- 状态/概览 ---------- */
+async function loadState() {
+  const st = await api("/api/admin/state");
+  // ★ default_agent 已随 P1-1 废除（目标 Agent 只由服务端裁决），这里改拿冲突台账：
+  //   同名接入被拦时，云端只记不吵，运营者必须看得见，否则客户只会说"连不上"。
+  S = { agents: st.agents || [], clients: st.clients || [], users: st.users || [],
+        merchants: st.merchants || [],
+        conflicts: st.conflicts || [], takeover_open: st.takeover_open || {},
+        rpc_timeout: st.rpc_timeout || 60 };
+  const online = S.agents.filter(a => a.online).length;
+  $("statusDot").style.background = online ? "#22c55e" : "#ef4444";
+  $("stOnline").textContent = online + " / " + S.agents.length;
+  $("stClients").textContent = S.clients.length;
+  $("lastUpd").textContent = "更新于 " + new Date().toLocaleTimeString();
+}
+
+async function loadStats() {
+  const s = await api("/api/admin/stats");
+  $("stOnline").textContent = s.online_agents + " / " + S.agents.length;
+  $("stClients").textContent = s.clients;
+  $("stToday").textContent = s.today;
+  $("stTotal").textContent = s.total;
+  $("stOk").textContent = s.ok;
+  $("stFail").textContent = s.fail;
+  const max = Math.max(1, ...s.days.map(d => d.count));
+  $("barChart").innerHTML = s.days.map(d =>
+    `<div class="col"><div class="bar" style="height:${Math.max(3, Math.round(d.count / max * 82))}px" title="${d.date}：${d.count}"></div><span class="muted small">${d.date}</span></div>`).join("");
+  $("opTop").innerHTML = (s.by_op.length ? s.by_op.map(o =>
+    `<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0"><span>${o.op}</span><span class="muted">${o.count} 次</span></div>`).join("")
+    : '<div class="muted small">还没有请求记录</div>');
+  const warn = [];
+  (S.conflicts || []).slice(-3).reverse().forEach(c => {
+    const held = c.held_by ? "被装机 " + c.held_by + (c.held_host ? "（" + c.held_host + "）" : "") + " 占着" : "占用方信息未知";
+    warn.push('<b>同名接入被拦：' + esc(c.agent) + '</b> —— ' + fmt(c.ts)
+      + '：新装机 ' + esc(c.rejected || "?") + (c.rejected_host ? "（" + esc(c.rejected_host) + "）" : "")
+      + ' 想上线，但这个名字' + held
+      + (c.channel ? '（通道 ' + esc(c.channel) + '）' : "")
+      + '。已在线的一方没有被顶掉。确实是换机/重装的话，到「本地 Agent」页那一行点『接管』。');
+  });
+  const open = Object.keys(S.takeover_open || {}).filter(k => S.takeover_open[k] * 1000 > Date.now());
+  if (open.length) warn.push('<b class="small">接管放行中：' + open.join("、") + '（3 分钟内有效，用一次即作废）</b>');
+  if (!S.agents.some(a => a.online)) warn.push('<b>没有在线 Agent</b> —— 到「本地 Agent」页登记密钥，并在客户电脑启动 Agent。');
+  if (!S.clients.length) warn.push('<b>还没有客户端令牌</b> —— 到「客户端令牌」页发放，小程序才能访问。');
+  $("ovWarn").innerHTML = warn.map(w => `<div class="banner bad">${w}</div>`).join("") || "";
+}
+
+/* ---------- Agent ---------- */
+function genSecret() { $("agSecret").value = (crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "")).slice(0, 24); }
+
+async function saveAgent() {
+  const name = $("agName").value.trim();
+  if (!name) { toast("请填写 Agent 名称", true); return; }
+  try {
+    const r = await api("/api/admin/agents", "POST", { name, secret: $("agSecret").value.trim() });
+    toast("已保存。密钥：" + r.agent.secret);
+    $("agName").value = ""; $("agSecret").value = "";
+    await loadState(); await loadAgents();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function loadAgents() {
+  const r = await api("/api/admin/agents");
+  S.agents = r.agents || [];
+  renderAgents();
+  fillAgentSelects();
+}
+
+function renderAgents() {
+  $("agBody").innerHTML = S.agents.map(a => `
+    <tr>
+      <td><b>${a.name}</b></td>
+      <td>${a.online ? '<span class="tag on">在线</span>' : '<span class="tag off">离线</span>'}</td>
+      <td>${a.version || (a.last_version_seen ? '<span class="muted">离线，最后 v' + esc(a.last_version_seen) + '</span>' : '<span class="muted">-</span>')}
+          ${a.version_too_old ? '<br><span style="color:var(--bad)" class="small">★ 版本过旧，需 &ge; ' + esc(a.min_agent_version) + '（灰度请先升这家）</span>' : ''}</td>
+      <td class="small muted">${a.online ? (a.ops || []).length : "-"}</td>
+      <td class="small">${a.install_id ? `<code>${esc(a.install_id)}</code>` : '<span class="muted">未上报（老版本 Agent）</span>'}<br>${a.hostname ? esc(a.hostname) : '<span class="muted">主机名未上报</span>'}</td>
+      <td><code>${a.secret}</code> <button class="btn link" onclick="copyText('','${a.secret}')">复制</button></td>
+      <td class="small muted">${a.online ? "连接于 " + fmt(a.connected_at) : "最近 " + fmt(a.last_seen)}</td>
+      <td class="small">
+        ${a.online ? `<button class="btn link" onclick="pingAgent('${a.name}')">Ping</button>
+                      <button class="btn link" style="color:var(--bad)" onclick="disconnectAgent('${a.name}')">断开</button>` : ""}
+        <button class="btn link" title="同名只允许一条连接。换机/重装会带来新装机指纹，点一下放行 3 分钟" onclick="takeoverAgent('${a.name}')">接管</button>
+        <button class="btn link" onclick="editSecret('${a.name}')">改密钥</button>
+        <button class="btn link" style="color:var(--bad)" onclick="deleteAgent('${a.name}')">删除登记</button>
+      </td>
+    </tr>`).join("") || '<tr><td colspan="8" class="muted">还没有登记 Agent —— 用上方表单新增</td></tr>';
+}
+
+function editSecret(name) {
+  const a = S.agents.find(x => x.name === name) || {};
+  $("modalTitle").textContent = "修改密钥：" + name;
+  $("modalBody").innerHTML = `
+    <div class="muted small" style="margin-bottom:8px">修改后客户电脑 config.json 的 agent.secret 也要同步改，Agent 下次重连生效。</div>
+    <input id="mSecret" style="width:100%" value="${a.secret || ""}">
+    <div class="row" style="margin-top:8px"><button class="btn gray" onclick="genModalSecret()">重新生成</button></div>`;
+  modalAction = async () => {
+    const secret = $("mSecret").value.trim();
+    if (secret.length < 8) { toast("密钥至少 8 位", true); return; }
+    await api("/api/admin/agents/" + encodeURIComponent(name) + "/secret", "POST", { secret });
+    toast("密钥已更新"); closeModal(); loadAgents();
+  };
+  showModal();
+}
+function genModalSecret() { $("mSecret").value = crypto.randomUUID().replace(/-/g, "").slice(0, 24); }
+
+async function deleteAgent(name) {
+  if (!confirm("删除 Agent 登记「" + name + "」？（在线需先断开）")) return;
+  try { await api("/api/admin/agents/" + encodeURIComponent(name), "DELETE"); toast("已删除"); loadState(); loadAgents(); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function pingAgent(name) {
+  toast("正在 Ping " + name + " …");
+  try {
+    const r = await api("/api/admin/rpc", "POST", { agent: name, op: "system.ping", params: {}, timeout: 15 });
+    toast(r.ok ? "Ping 成功：" + JSON.stringify(r.response) : "Ping 失败：" + JSON.stringify(r.error), !r.ok);
+  } catch (e) { toast(e.message, true); }
+}
+async function disconnectAgent(name) {
+  if (!confirm("断开 Agent " + name + "？")) return;
+  try { await api("/api/admin/agents/" + encodeURIComponent(name) + "/disconnect", "POST", {}); toast("已断开"); loadAgents(); }
+  catch (e) { toast(e.message, true); }
+}
+/* 接管 = 一次性放行 3 分钟。为什么要点一下：同名只允许一条连接，而"换机/重装系统/硬盘坏了"
+   都会带来新的装机指纹；自动放行就等于回到"谁先连上算谁"，那正是把在线商户顶掉的那类事故。 */
+async function takeoverAgent(name) {
+  if (!confirm("放行「" + name + "」换机接管？\n\n"
+    + "确定后有 3 分钟窗口：让对方机器上的 Agent 现在重连（或点『启动后台 Agent』）。\n"
+    + "窗口内新装机指纹替换旧的；过了窗口作废，现网连接不受影响。")) return;
+  try {
+    const r = await api("/api/admin/agents/" + encodeURIComponent(name) + "/takeover", "POST", {});
+    toast(r.message || "已放行 3 分钟"); loadState();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ---------- 商户 ---------- */
+let MB = null;          // 最近一次开通的密钥，只存在内存里：刷新即没，逼你当场存进密码管理器
+
+async function loadMerchants() {
+  try {
+    const r = await api("/api/admin/merchants");
+    S.merchants = r.merchants || [];
+    renderMerchants();
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderMerchants() {
+  $("mcBody").innerHTML = (S.merchants || []).map(m => `
+    <tr>
+      <td><b>${esc(m.code)}</b></td>
+      <td>${esc(m.title || m.code)}</td>
+      <td class="small">${m.agent_registered
+          ? (m.online ? '<span class="tag on">在线</span>' : '<span class="tag off">未在线</span>')
+          : '<span class="tag off">未登记</span>'}</td>
+      <td class="small">${esc(m.min_agent_version || "不强制")}</td>
+      <td class="small muted">${(m.clients || []).map(esc).join("、") || "—"}</td>
+      <td class="small muted">${(m.accounts || []).map(esc).join("、") || "—"}</td>
+      <td class="small">${m.enabled === false ? '<span class="tag off">已停用</span>' : '<span class="tag on">启用中</span>'}</td>
+      <td class="small">
+        <button class="btn link" onclick="editMinVer('${esc(m.code)}')">改门槛</button>
+        <button class="btn link" onclick="toggleMerchant('${esc(m.code)}', ${m.enabled === false})">${m.enabled === false ? "启用" : "停用"}</button>
+        <button class="btn link" style="color:var(--bad)" onclick="dropMerchant('${esc(m.code)}')">下线删除</button>
+      </td>
+    </tr>`).join("") || '<tr><td colspan="8" class="muted">还没有商户</td></tr>';
+}
+
+function randPw() {
+  const a = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789#@%";
+  return Array.from(crypto.getRandomValues(new Uint8Array(14))).map(x => a.charAt(x % a.length)).join("");
+}
+
+async function createMerchant() {
+  const code = $("mcCode").value.trim().toLowerCase();
+  if (!/^[a-z][a-z0-9-]{1,29}$/.test(code)) { toast("商户码不合法：小写字母开头，可含数字与 -，2-30 位", true); return; }
+  const title = $("mcTitle").value.trim() || code;
+  const user = $("mcUser").value.trim() || (code + "-admin");
+  const pw = randPw();
+  try {
+    const r = await api("/api/admin/merchants", "POST", {
+      code, title, enabled: true, database_hint: $("mcDbHint").value.trim(),
+      min_agent_version: $("mcMinVer").value.trim() });
+    const c = await api("/api/admin/clients", "POST", { name: code, title, agent: code, access: $("mcAccess").value });
+    await api("/api/admin/accounts", "POST", { username: user, password: pw,
+      name: title + " 管理员", stores: [code], all_stores: false });
+    showBundle({ code, title, secret: r.agent_secret || "(已存在同名 Agent，未新生成)",
+                 token: (c.client || {}).token || "", user, pw });
+    toast("商户已开通");
+    $("mcCode").value = ""; $("mcTitle").value = ""; $("mcUser").value = "";
+    await loadState(); loadMerchants();
+  } catch (e) { toast(e.message, true); }
+}
+
+function mbRow(label, key) {
+  const v = (MB && MB[key]) || "";
+  return '<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:5px 0">'
+    + '<span class="small">' + label + '</span><span class="small"><code>'
+    + esc(String(v).slice(0, 8)) + '…</code> <button class="btn link" onclick="copyBundle(\''
+    + key + '\')">复制</button></span></div>';
+}
+
+function showBundle(b) {
+  MB = b;
+  $("mcBundle").innerHTML = '<div class="banner ok" style="margin-top:12px"><b>'
+    + esc(b.title) + '（' + esc(b.code) + '）已开通。下面这些只显示这一次，'
+    + '关掉页面就再也取不到 —— 请立即存进密码管理器：</b>'
+    + mbRow("Agent 密钥（填客户机 config.json 的 agent.secret）", "secret")
+    + mbRow("客户端令牌（入口/小程序用）", "token")
+    + mbRow("应用账号 " + esc(b.user) + " 的初始口令", "pw")
+    + '<div style="margin-top:8px"><button class="btn gray" onclick="copyBundle(\'cfg\')">'
+    + '复制 config.json 片段</button> <span class="muted small">其中 sql.password / sql.database 要现场填'
+    + ' —— 缺 database 时 Agent 会拒绝启动，这是刻意的（防止用 A 家名字读 B 家账）。</span></div></div>';
+}
+
+function copyBundle(k) {
+  if (!MB) return;
+  const cfg = k === "cfg" ? JSON.stringify({
+    agent: { name: MB.code, secret: MB.secret, relay_url: location.origin.replace(/^http/, "ws") + "/ws/agent" },
+    sql: { server: "127.0.0.1", port: 1433, user: "sa", password: "", database: "" }}, null, 2) : MB[k];
+  copyText(0, cfg);
+}
+
+async function toggleMerchant(code, enable) {
+  if (!enable && !confirm("停用商户「" + code + "」？\n该商户的所有请求会立刻回 403 MERCHANT_DISABLED；"
+    + "密钥与客户端都留着，随时可启用。")) return;
+  try {
+    await api("/api/admin/merchants", "POST", { code, enabled: enable });
+    toast(enable ? "已启用" : "已停用"); await loadState(); loadMerchants();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function editMinVer(code) {
+  const cur = ((S.merchants || []).find(m => m.code === code) || {}).min_agent_version || "";
+  const v = prompt("商户「" + code + "」的最低 Agent 版本（三段号，如 0.2.0；留空 = 不强制）\n"
+    + "装机版本低于它时，「本地 Agent」页那一行会标红 —— 这就是灰度的抓手。", cur);
+  if (v === null) return;
+  try {
+    await api("/api/admin/merchants", "POST", { code, min_agent_version: v.trim() });
+    toast("已设置"); loadMerchants();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function dropMerchant(code) {
+  if (!confirm("彻底删除商户「" + code + "」？\n这会连同名 Agent 登记一起删，客户机立刻连不上且要重新发密钥。\n"
+    + "只是临时停服请点「停用」。")) return;
+  if (prompt("输入商户码以确认删除：") !== code) { toast("两次输入不一致，未删除"); return; }
+  try {
+    await api("/api/admin/merchants/" + encodeURIComponent(code) + "?confirm=delete", "DELETE", {});
+    toast("已删除"); await loadState(); loadMerchants();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ---------- 令牌 ---------- */
+function fillAgentSelects() {
+  const opts = S.agents.map(a => `<option value="${a.name}">${a.name}${a.online ? "（在线）" : "（离线）"}</option>`).join("")
+    || '<option value="">（还没有登记 Agent）</option>';
+  $("tkAgent").innerHTML = opts;
+  $("rpAgent").innerHTML = opts;
+}
+
+async function addToken() {
+  const name = $("tkName").value.trim();
+  if (!name) { toast("请填写客户端名称", true); return; }
+  const title = $("tkTitle").value.trim() || name;
+  try {
+    const r = await api("/api/admin/clients", "POST", {
+      name, title, agent: $("tkAgent").value, access: $("tkAccess").value,
+    });
+    toast("已生成令牌");
+    showTokenModal(r.client);
+    $("tkTitle").value = ""; $("tkName").value = "";
+    await loadState(); renderTokens();
+  } catch (e) { toast(e.message, true); }
+}
+
+function showTokenModal(c) {
+  $("modalTitle").textContent = "客户端令牌已生成（只显示这一次）";
+  $("modalBody").innerHTML = `
+    <div class="muted small" style="margin-bottom:8px">店铺：${c.title || c.name} · 内部名：${c.name} · 绑定：${c.agent} · ${c.access === "auth" ? "仅授权老板访问" : "通用访客"}</div>
+    <pre style="max-height:none">${c.token}</pre>
+    <div class="muted small">小程序请求时 Header 加：<code>Authorization: Bearer ${c.token}</code>
+    ${c.access === "auth" ? "，并带 X-Openid（微信登录后自动附带）" : "（通用访客模式可暂不带 openid）"}</div>`;
+  modalAction = async () => { closeModal(); };
+  $("modalOk").textContent = "我已复制";
+  showModal();
+}
+
+function renderTokens() {
+  const authNames = (c) => {
+    const hit = S.users.filter(u => u.all_clients || (u.clients || []).includes(c.name));
+    if (hit.some(u => u.all_clients)) return '<span class="tag on">全部(通用)</span>';
+    return hit.length ? hit.map(u => u.name).join("、") : (c.access === "auth" ? '<span class="tag off">未授权</span>' : '<span class="muted small">访客模式</span>');
+  };
+  $("tkBody").innerHTML = S.clients.map(c => `
+    <tr>
+      <td><b>${c.title || c.name}</b>${c.title && c.title !== c.name ? `<div class="muted small">${c.name}</div>` : ""}
+          <button class="btn link" onclick="editToken('${c.token}')">编辑</button></td>
+      <td>${c.agent}</td>
+      <td>${c.access === "auth" ? '<span class="tag" style="background:#fef3c7;color:#92400e">仅授权老板</span>' : '<span class="tag on">通用访客</span>'}</td>
+      <td class="small">${authNames(c)}</td>
+      <td><code>${c.token}</code> <button class="btn link" onclick="copyText('','${c.token}')">复制</button></td>
+      <td><button class="btn link" style="color:var(--bad)" onclick="deleteToken('${c.token}','${c.name}')">删除</button></td>
+    </tr>`).join("") || '<tr><td colspan="6" class="muted">还没有令牌 —— 用上方表单发放</td></tr>';
+}
+
+function editToken(token) {
+  const c = S.clients.find(x => x.token === token);
+  if (!c) return;
+  $("modalTitle").textContent = "修改客户端";
+  $("modalBody").innerHTML = `
+    <label>店铺显示名（小程序里显示）</label><input id="mTitle" style="width:100%" value="${c.title || c.name}">
+    <label>名称</label><input id="mName" style="width:100%" value="${c.name}">
+    <label>绑定 Agent</label><select id="mAgent" style="width:100%">${S.agents.map(a => `<option value="${a.name}" ${a.name === c.agent ? "selected" : ""}>${a.name}</option>`).join("")}</select>
+    <label>访问模式</label><select id="mAccess" style="width:100%">
+      <option value="guest" ${(c.access || "guest") === "guest" ? "selected" : ""}>通用访客（免登录）</option>
+      <option value="auth" ${c.access === "auth" ? "selected" : ""}>仅授权老板访问</option>
+    </select>`;
+  modalAction = async () => {
+    await api("/api/admin/clients/" + token, "POST", {
+      name: $("mName").value.trim(), title: $("mTitle").value.trim(), agent: $("mAgent").value,
+      access: $("mAccess").value,
+    });
+    toast("已更新"); closeModal(); loadState(); renderTokens();
+  };
+  $("modalOk").textContent = "保存";
+  showModal();
+}
+
+let openidTarget = "";
+async function loadRecent(target) {
+  openidTarget = target || "";
+  const r = await api("/api/admin/recent-logins");
+  const rows = r.logins || [];
+  $("modalTitle").textContent = "最近登录的微信用户（openid）";
+  $("modalBody").innerHTML = rows.length
+    ? `<table style="min-width:520px"><thead><tr><th>客户端</th><th>openid</th><th>最近登录</th><th></th></tr></thead><tbody>` +
+      rows.map(x => `<tr><td>${x.client}</td><td><code>${x.openid}</code></td>
+        <td class="small muted">${fmt(x.last_seen)}</td>
+        <td><button class="btn link" onclick="copyText('','${x.openid}')">复制</button>
+        ${openidTarget ? `<button class="btn green" onclick="fillOpenid('${x.openid}')">填入</button>` : ""}</td></tr>`).join("") +
+      `</tbody></table><div class="muted small" style="margin-top:8px">「填入」或「复制」后，到「老板授权」页添加该 openid 并勾选可访问的客户端。</div>`
+    : '<div class="muted">还没有记录。请先用通用令牌在微信打开小程序登录一次（会记录 openid），再回来绑定。</div>';
+  modalAction = async () => { closeModal(); };
+  showModal();
+}
+function fillOpenid(openid) {
+  if (openidTarget && $(openidTarget)) $(openidTarget).value = openid;
+  closeModal();
+  toast("已填入 openid");
+}
+
+async function deleteToken(token, name) {
+  if (!confirm("删除令牌「" + name + "」？该客户端将立即无法访问。")) return;
+  try { await api("/api/admin/clients/" + token, "DELETE"); toast("已删除"); loadState(); renderTokens(); }
+  catch (e) { toast(e.message, true); }
+}
+
+/* ---------- 老板授权 ---------- */
+function renderClientChecks(container, selected) {
+  const sel = selected || [];
+  $(container).innerHTML = S.clients.map(c =>
+    `<label style="display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);padding:5px 9px;border-radius:8px">
+       <input type="checkbox" value="${c.name}" ${sel.includes(c.name) ? "checked" : ""}> ${c.title || c.name}
+     </label>`).join("") || '<span class="muted small">还没有客户端，先到「客户端令牌」页发放</span>';
+}
+
+function renderUsers() {
+  $("usClients").innerHTML = "";
+  renderClientChecks("usClients", []);
+  $("usBody").innerHTML = S.users.map(u => `
+    <tr>
+      <td>${u.name}</td>
+      <td><code>${u.openid}</code></td>
+      <td class="small">${u.all_clients ? '<span class="tag on">全部客户端(通用)</span>'
+        : (u.clients || []).join("、") || '<span class="tag off">未授权</span>'}</td>
+      <td class="small muted">${fmt(u.last_seen)}</td>
+      <td><button class="btn link" onclick='editUser("${u.openid}")'>编辑</button>
+          <button class="btn link" style="color:var(--bad)" onclick="deleteUser('${u.openid}','${u.name}')">删除</button></td>
+    </tr>`).join("") || '<tr><td colspan="5" class="muted">还没有老板用户 —— 用上方表单添加并勾选可访问客户端</td></tr>';
+}
+
+async function addUser() {
+  const name = $("usName").value.trim();
+  const openid = $("usOpenid").value.trim();
+  if (!name || !openid) { toast("请填写名称和 openid", true); return; }
+  const all = $("usAll").checked;
+  const clients = all ? [] : Array.from(document.querySelectorAll("#usClients input:checked")).map(x => x.value);
+  try {
+    await api("/api/admin/users", "POST", { name, openid, clients, all_clients: all });
+    toast("老板授权已保存");
+    $("usName").value = ""; $("usOpenid").value = ""; $("usAll").checked = false;
+    renderClientChecks("usClients", []);
+    await loadState(); renderUsers();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function editUser(openid) {
+  const u = S.users.find(x => x.openid === openid);
+  if (!u) return;
+  $("modalTitle").textContent = "编辑老板授权：" + u.name;
+  $("modalBody").innerHTML = `
+    <label>名称</label><input id="eName" style="width:100%" value="${u.name}">
+    <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+      <input type="checkbox" id="eAll" ${u.all_clients ? "checked" : ""}> 全部客户端通用访问
+    </label>
+    <div id="eClients" style="margin-top:8px"></div>`;
+  renderClientChecks("eClients", u.clients || []);
+  modalAction = async () => {
+    const all = $("eAll").checked;
+    const clients = all ? [] : Array.from(document.querySelectorAll("#eClients input:checked")).map(x => x.value);
+    await api("/api/admin/users/" + encodeURIComponent(openid), "POST", {
+      name: $("eName").value.trim(), openid, clients, all_clients: all,
+    });
+    toast("已保存"); closeModal(); loadState(); renderUsers(); renderTokens();
+  };
+  $("modalOk").textContent = "保存";
+  showModal();
+}
+
+async function deleteUser(openid, name) {
+  if (!confirm("删除老板「" + name + "」的授权？该 openid 将无法访问任何客户端。")) return;
+  try {
+    await api("/api/admin/users/" + encodeURIComponent(openid), "DELETE");
+    toast("已删除"); loadState(); renderUsers(); renderTokens();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ---------- 审计 ---------- */
+async function loadAccounts() {
+  try {
+    const r = await api("/api/admin/accounts");
+    S.accounts = r.accounts || [];
+    renderAccounts();
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderAccounts() {
+  const stores = (S.clients || []).map(c => c.title || c.name);
+  $("acBody").innerHTML = (S.accounts || []).map(a => `
+    <tr>
+      <td><code>${a.username}</code></td>
+      <td>${a.name || "-"}</td>
+      <td class="small">${a.all_stores ? "全部店铺" : (a.stores && a.stores.length ? a.stores.join("、") : "未绑定")}</td>
+      <td>${a.disabled ? '<span class="tag off">已禁用</span>' : '<span class="tag on">正常</span>'}</td>
+      <td class="small muted">${a.updated_at || a.created_at || "-"}</td>
+      <td>
+        <button class="btn link" onclick="resetAccountPassword('${a.username}')">重置密码</button>
+        <button class="btn link" style="color:var(--bad)" onclick="deleteAccount('${a.username}','${a.name || ""}')">删除</button>
+      </td>
+    </tr>`).join("") || '<tr><td colspan="6" class="muted">还没有应用账号 —— 用上方表单新增</td></tr>';
+}
+
+async function saveAccount() {
+  const username = $("acUser").value.trim();
+  const name = $("acName").value.trim();
+  const password = $("acPwd").value;
+  const all_stores = $("acAll").checked;
+  const disabled = $("acDisabled").checked;
+  if (!username) { toast("请填写登录账号", true); return; }
+  const stores = all_stores ? [] : Array.from(document.querySelectorAll("#acClients input:checked")).map(x => x.value);
+  try {
+    await api("/api/admin/accounts", "POST", { username, name, password, stores, all_stores, disabled });
+    toast("应用账号已保存");
+    $("acUser").value = ""; $("acName").value = ""; $("acPwd").value = "";
+    $("acAll").checked = false; $("acDisabled").checked = false;
+    renderClientChecks("acClients", []);
+    loadAccounts();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function resetAccountPassword(username) {
+  const pwd = prompt("输入「" + username + "」的新密码（至少 6 位）");
+  if (!pwd) return;
+  try {
+    await api("/api/admin/accounts/" + encodeURIComponent(username) + "/password", "POST", { password: pwd });
+    toast("密码已重置");
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteAccount(username, name) {
+  if (!confirm("删除应用账号「" + (name || username) + "」？删除后 App 将无法登录。")) return;
+  try {
+    await api("/api/admin/accounts/" + encodeURIComponent(username), "DELETE");
+    toast("已删除");
+    loadAccounts();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function loadAudit() {
+  const q = new URLSearchParams({ op: $("auOp").value.trim(), agent: $("auAgent").value.trim(), client: $("auClient").value.trim(), ok: $("auOk").value, limit: 500 });
+  const r = await api("/api/admin/audit?" + q.toString());
+  $("auBody").innerHTML = (r.entries || []).map(e => `
+    <tr>
+      <td class="small">${fmt(e.ts)}</td><td>${e.client || "-"}</td><td>${e.agent || "-"}</td>
+      <td><code>${e.op}</code></td>
+      <td>${e.ok ? '<span class="tag on">成功</span>' : '<span class="tag off">失败 ' + (e.code || "") + "</span>"}</td>
+      <td class="small muted">${e.note || "-"}</td>
+    </tr>`).join("") || '<tr><td colspan="6" class="muted">没有符合条件的日志</td></tr>';
+}
+
+/* ---------- RPC ---------- */
+function renderPresets() {
+  $("opList").innerHTML = Object.keys(OPS).map(op => `<option value="${op}">`).join("");
+  // order 只决定**展示顺序**；不在 order 里的分类会被自动追加到末尾
+  // （见下方 cats 的 concat），所以新增分类不会「看不见」。
+  const order = ["连接与状态", "销售单", "采购", "客户", "商品", "库存与取价", "看板与报表", "打印与任务"];
+  const groups = {};
+  Object.keys(OPS).forEach(op => { const c = OPS[op].cat || "其它"; (groups[c] = groups[c] || []).push(op); });
+  const cats = order.filter(c => groups[c]).concat(Object.keys(groups).filter(c => !order.includes(c)));
+  $("rpPresets").innerHTML = cats.map(cat => {
+    const cards = groups[cat].map(op => {
+      const p = OPS[op];
+      return `<div class="op-preset" style="flex:1;min-width:260px" onclick="usePreset('${op}')">
+        <div class="t">${p.label}</div><div class="muted small">${op}</div>
+        <div class="muted small">${p.desc}</div>
+        ${p.rest ? `<div class="muted small" style="color:#1677ff">${p.rest}</div>` : ""}
+      </div>`;
+    }).join("");
+    return `<div style="flex-basis:100%;font-weight:600;margin:8px 0 2px">${cat}</div>${cards}`;
+  }).join("");
+}
+function renderRpcForm() {
+  renderPresets();
+  if (!$("rpOp").value) usePreset("bill.get"); else showOpHelp();
+}
+function showOpHelp() {
+  const op = $("rpOp").value.trim();
+  const p = OPS[op];
+  $("rpHelp").textContent = p ? p.help : (op ? "自定义 op：请先确认该 Agent 支持（agent.info 可查）。" : "从上方按钮选择一个功能，或手动输入 op。");
+}
+function usePreset(op) {
+  const p = OPS[op];
+  if (!p) return;
+  $("rpOp").value = op;
+  $("rpParams").value = JSON.stringify(p.params, null, 2);
+  showOpHelp();
+}
+async function sendRpc() {
+  let params = {};
+  try { params = JSON.parse($("rpParams").value || "{}"); }
+  catch (e) { $("rpResult").textContent = "参数不是合法 JSON：" + e.message; return; }
+  $("rpResult").textContent = "请求中…";
+  const t0 = performance.now();
+  try {
+    const r = await api("/api/admin/rpc", "POST", {
+      agent: $("rpAgent").value, op: $("rpOp").value.trim(), params,
+      timeout: parseInt($("rpTimeout").value || "60", 10),
+    });
+    $("rpResult").textContent = JSON.stringify(r, null, 2) + "\n\n（耗时 " + Math.round(performance.now() - t0) + " ms）";
+  } catch (e) { $("rpResult").textContent = e.message; }
+}
+
+/* ---------- 设置 ---------- */
+async function loadSettings() {
+  const s = await api("/api/admin/settings");
+  $("stTimeout").value = s.rpc_timeout;
+  $("stWxEnabled").checked = !!(s.wechat && s.wechat.enabled);
+  $("stWxAppid").value = (s.wechat && s.wechat.appid) || "";
+  $("stWxSecret").value = "";
+  $("stWxSecret").placeholder = (s.wechat && s.wechat.secret_set) ? "已设置，留空表示不修改" : "未设置";
+  $("stPortal").value = s.portal_token || "";
+  fillAgentSelects();
+  $("svInfo").innerHTML = `
+    <div class="row"><span>监听地址：<code>${s.server.host}:${s.server.port}</code></span>
+    <span>审计目录：<code>${s.log_dir}</code></span>
+    <span>后台密码：${s.admin_password_set ? "已设置" : "未设置（使用默认）"}</span></div>`;
+}
+async function saveSettings() {
+  // 不再提交 default_agent：云端会忽略它并记一条 admin.settings.ignored 审计
+  const body = { rpc_timeout: parseInt($("stTimeout").value || "60", 10) };
+  const pwd = $("stPwd").value;
+  if (pwd) body.password = pwd;
+  try {
+    await api("/api/admin/settings", "POST", body);
+    toast("设置已保存"); $("stPwd").value = "";
+    await loadState(); await loadSettings();
+  } catch (e) { toast(e.message, true); }
+}
+async function saveWxSettings() {
+  const body = {
+    wechat: {
+      enabled: $("stWxEnabled").checked,
+      appid: $("stWxAppid").value.trim(),
+      secret: $("stWxSecret").value,
+    },
+    portal_token: $("stPortal").value.trim(),
+  };
+  if (!body.wechat.appid && body.wechat.enabled) { toast("启用微信登录需先填 AppID", true); return; }
+  if (body.portal_token && body.portal_token.length < 8) { toast("入口令牌至少 8 位", true); return; }
+  try {
+    await api("/api/admin/settings", "POST", body);
+    toast("微信设置已保存");
+    await loadSettings();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ---------- 弹窗/帮助/复制 ---------- */
+function showModal() { $("modalOk").textContent = "确定"; $("modalMask").classList.add("show"); $("modalOk").onclick = () => modalAction && modalAction(); }
+function closeModal() { $("modalMask").classList.remove("show"); modalAction = null; }
+function showHelp() { $("helpMask").classList.add("show"); }
+function hideHelp() { $("helpMask").classList.remove("show"); }
+
+async function copyText(id, text) {
+  const val = text ?? $(id)?.value;
+  if (!val) return;
+  try { await navigator.clipboard.writeText(val); toast("已复制"); }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = val; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove(); toast("已复制");
+  }
+}
+
+function fmt(ts) { return ts ? new Date(ts * 1000).toLocaleString() : "-"; }
+
+/* 启动 */
+window.addEventListener("load", async () => {
+  try { await api("/api/admin/state"); $("loginView").style.display = "none"; $("app").style.display = "block"; await boot(); }
+  catch (e) { /* 保持登录页 */ }
+});
+</script>
+</body>
+</html>

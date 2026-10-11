@@ -1,0 +1,58 @@
+<view class="page tab-page sales-page">
+  <!-- 搜索 -->
+  <view class="search">
+    <image src="/assets/icons/search.svg" mode="aspectFit" />
+    <input
+      class="search-input"
+      placeholder="输入单号 / 客户名称查询"
+      value="{{keyword}}"
+      confirm-type="search"
+      bindinput="onKeyword"
+      bindconfirm="onSearch"
+    />
+    <view wx:if="{{keyword}}" class="search-clear" bindtap="onClear">✕</view>
+  </view>
+
+  <!-- 时间页签 -->
+  <view class="tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="*this"
+      class="tab {{activeTab === item ? 'selected' : ''}}"
+      data-tab="{{item}}"
+      bindtap="onTab"
+    >{{item}}</view>
+  </view>
+
+  <view class="sales-body">
+    <view wx:if="{{loading}}" class="u-loading">查询中…</view>
+    <view wx:elif="{{!displayList.length}}" class="u-empty">
+      {{searched ? '没有找到销售单，换个时间或客户试试' : '点击上方页签查看销售单'}}
+    </view>
+
+    <view
+      class="order-card"
+      wx:for="{{displayList}}"
+      wx:key="bill_no"
+      data-no="{{item.bill_no}}"
+      hover-class="order-h"
+      bindtap="onOpen"
+    >
+      <view class="order-top">
+        <text class="order-id">{{item.bill_no}}</text>
+        <text class="u-status {{item.statusClass}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-name">{{item.name}}</view>
+      <view class="order-goods">{{item.goodsText}}</view>
+      <view class="order-foot">
+        <text>{{item.timeText}}</text>
+        <text class="order-amount">{{item.amountText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 新建 -->
+  <view class="fab" hover-class="fab-hover" bindtap="onCreate">
+    <image src="/assets/icons/plus.svg" mode="aspectFit" />
+  </view>
+</view>

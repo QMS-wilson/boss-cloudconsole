@@ -1,0 +1,18 @@
+<view class="tab-bar">
+  <view class="tab {{selected === 'home' ? 'active' : ''}}" data-url="home" hover-class="tab-h" bindtap="onTap">
+    <image src="{{selected === 'home' ? '/assets/icons/tab/home-a.svg' : '/assets/icons/tab/home-g.svg'}}" mode="aspectFit" />
+    <text>首页</text>
+  </view>
+  <view class="tab {{selected === 'sales' ? 'active' : ''}}" data-url="sales" hover-class="tab-h" bindtap="onTap">
+    <image src="{{selected === 'sales' ? '/assets/icons/tab/file-a.svg' : '/assets/icons/tab/file-g.svg'}}" mode="aspectFit" />
+    <text>销售</text>
+  </view>
+  <view class="tab {{selected === 'customers' ? 'active' : ''}}" data-url="customers" hover-class="tab-h" bindtap="onTap">
+    <image src="{{selected === 'customers' ? '/assets/icons/tab/users-a.svg' : '/assets/icons/tab/users-g.svg'}}" mode="aspectFit" />
+    <text>客户</text>
+  </view>
+  <view class="tab {{selected === 'profile' ? 'active' : ''}}" data-url="profile" hover-class="tab-h" bindtap="onTap">
+    <image src="{{selected === 'profile' ? '/assets/icons/tab/user-a.svg' : '/assets/icons/tab/user-g.svg'}}" mode="aspectFit" />
+    <text>我的</text>
+  </view>
+</view>

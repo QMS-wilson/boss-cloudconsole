@@ -1,0 +1,70 @@
+<view class="page customer-detail">
+  <view class="hero-card">
+    <view class="hc-name">{{name || code}}</view>
+    <view class="hc-meta">{{code}}{{category ? ' · ' + category : ''}}</view>
+    <view class="hc-trace" wx:if="{{isRecentPrice}}">价格跟踪：最近销价</view>
+  </view>
+
+  <view class="metrics">
+    <view class="metric card">
+    <view class="m-label">累计销售额 (元)</view>
+    <view class="m-value blue">¥{{saleText}}</view>
+    </view>
+    <view class="metric card">
+      <view class="m-label">应收账款 (元)</view>
+      <view class="m-value {{due > 0 ? 'orange' : 'ok'}}">¥{{dueText}}</view>
+    </view>
+  </view>
+
+  <view class="u-card contact">
+    <view class="sec-title">联系方式</view>
+    <view class="u-divider"></view>
+    <view class="contact-row">
+      <image src="/assets/icons/tab/user-g.svg" mode="aspectFit" />
+      <text>联系人：{{contact || '未填写'}}</text>
+    </view>
+    <view class="contact-row">
+      <image src="/assets/icons/phone.svg" mode="aspectFit" />
+      <text>手机：{{phone || '未填写'}}</text>
+    </view>
+    <view class="contact-row" wx:if="{{tel}}">
+      <image src="/assets/icons/phone.svg" mode="aspectFit" />
+      <text>电话：{{tel}}</text>
+    </view>
+    <view class="contact-row">
+      <image src="/assets/icons/pin.svg" mode="aspectFit" />
+      <text>地址：{{address || '未填写'}}</text>
+    </view>
+    <view class="contact-tip" wx:if="{{remark}}">备注：{{remark}}</view>
+  </view>
+
+  <view class="history-head">
+    <view class="list-title">最近销售记录</view>
+    <view class="list-tip">仅当年单据</view>
+  </view>
+
+  <view wx:if="{{historyLoading}}" class="u-loading">加载中…</view>
+  <view wx:elif="{{!history.length}}" class="u-empty">今年还没有该客户的销售单</view>
+
+  <view
+    class="u-card history-card"
+    wx:for="{{history}}"
+    wx:key="bill_no"
+    data-no="{{item.bill_no}}"
+    hover-class="card-h"
+    bindtap="onOpen"
+  >
+    <view class="hc-top">
+      <text class="hc-no">{{item.bill_no}}</text>
+      <text class="u-status {{item.statusClass}}">{{item.statusText}}</text>
+    </view>
+    <view class="hc-amt">¥{{item.amountText}}</view>
+    <view class="hc-time">{{item.timeText}}</view>
+  </view>
+
+  <view style="height: 40rpx"></view>
+
+  <view class="sticky-action">
+    <button class="u-btn ghost" bindtap="onNewOrder">为该客户开单</button>
+  </view>
+</view>

@@ -1,0 +1,100 @@
+<view class="page tab-page home-page">
+  <view class="home-body">
+    <!-- 问候 -->
+    <view class="greeting">
+      <view class="g-name">你好，{{userName}} 👋</view>
+      <view class="g-date">{{dateLabel}}</view>
+    </view>
+
+    <!-- 数据看板 -->
+    <view class="metrics">
+      <view class="metric card">
+        <view class="m-label">本月销售额 (元)</view>
+        <view class="m-value blue">{{monthAmount}}</view>
+      </view>
+      <view class="metric card">
+        <view class="m-label">今日销售额 (元)</view>
+        <view class="m-value">{{todayAmount}}</view>
+      </view>
+      <view class="metric card">
+        <view class="m-label">今日销售单 (笔)</view>
+        <view class="m-value">{{todayCount}} 单</view>
+      </view>
+      <view class="metric card" hover-class="metric-h" bindtap="onReceivable">
+        <view class="m-label">应收账款 (元)</view>
+        <view class="m-value orange">{{receivableText}}</view>
+      </view>
+    </view>
+
+    <!-- 新建销售单 -->
+    <button class="create" hover-class="create-h" bindtap="onCreate">
+      <image src="/assets/icons/plus.svg" mode="aspectFit" />
+      <text>新建销售单</text>
+    </button>
+
+    <!-- 快捷入口 -->
+    <view class="quick-data">
+      <view class="quick-row" hover-class="quick-h" bindtap="goCustomers">
+        <view class="quick-icon c-blue">
+          <image src="/assets/icons/tab/users-a.svg" mode="aspectFit" />
+        </view>
+        <view class="quick-info">
+          <view class="quick-title">客户资料</view>
+          <view class="quick-sub">查看客户与往来账款</view>
+        </view>
+        <image class="quick-chevron" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="quick-row" hover-class="quick-h" bindtap="goProducts">
+        <view class="quick-icon c-purple">
+          <image src="/assets/icons/file-color.svg" mode="aspectFit" />
+        </view>
+        <view class="quick-info">
+          <view class="quick-title">产品资料</view>
+          <view class="quick-sub">查看与编辑商品信息</view>
+        </view>
+        <image class="quick-chevron" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+      <view class="quick-row" hover-class="quick-h" bindtap="goReport">
+        <view class="quick-icon c-green">
+          <image src="/assets/icons/tab/file-a.svg" mode="aspectFit" />
+        </view>
+        <view class="quick-info">
+          <view class="quick-title">经营报表</view>
+          <view class="quick-sub">销售趋势 / 排行 / 应收</view>
+        </view>
+        <image class="quick-chevron" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+    </view>
+
+    <!-- 最近销售单 -->
+    <view class="section-head">
+      <view class="section-title">最近销售单</view>
+      <view class="section-more" bindtap="goSales">查看全部
+        <image src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+    </view>
+
+    <view wx:if="{{recentLoading}}" class="u-loading">加载中…</view>
+    <view wx:elif="{{!recent.length}}" class="u-empty">
+      本月还没有销售单，点「新建销售单」开第一张吧
+    </view>
+    <view
+      class="order-card"
+      wx:for="{{recent}}"
+      wx:key="bill_no"
+      data-no="{{item.bill_no}}"
+      hover-class="order-h"
+      bindtap="onOpen"
+    >
+      <view class="order-top">
+        <text class="order-id">{{item.bill_no}}</text>
+        <text class="u-status {{item.statusClass}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-name">{{item.name}}</view>
+      <view class="order-foot">
+        <text>{{item.timeText}}</text>
+        <text class="order-amount">{{item.amountText}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,163 @@
+.report-page {
+  padding: 24rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.periods {
+  display: flex;
+  background: #eef1f6;
+  border-radius: 20rpx;
+  padding: 6rpx;
+  margin-bottom: 26rpx;
+}
+
+.period {
+  flex: 1;
+  text-align: center;
+  height: 68rpx;
+  line-height: 68rpx;
+  font-size: 28rpx;
+  color: #59667a;
+  border-radius: 16rpx;
+}
+
+.period.active {
+  background: #ffffff;
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #1677ff, #3f8cff);
+  color: #ffffff;
+}
+
+.sc-title {
+  font-size: 26rpx;
+  color: #dbe9ff;
+}
+
+.sc-amount {
+  margin-top: 18rpx;
+  font-size: 64rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+}
+
+.sc-sub {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: #dbe9ff;
+}
+
+.sec-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sec-extra {
+  color: #ff4d22;
+  font-size: 26rpx;
+}
+
+.empty-line {
+  color: #9ca3af;
+  font-size: 26rpx;
+  padding: 26rpx 0 6rpx;
+}
+
+.trend-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.tr-date {
+  width: 120rpx;
+  flex: none;
+  color: #8c98aa;
+  font-size: 24rpx;
+}
+
+.tr-bar {
+  flex: 1;
+  height: 18rpx;
+  border-radius: 18rpx;
+  background: #f0f2f5;
+  overflow: hidden;
+}
+
+.tr-in {
+  height: 100%;
+  border-radius: 18rpx;
+  background: #1677ff;
+}
+
+.tr-amount {
+  width: 160rpx;
+  flex: none;
+  text-align: right;
+  color: #1f2937;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid #f3f4f6;
+}
+
+.rank-row:last-child {
+  border-bottom: 0;
+}
+
+.rank-no {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #eef4ff;
+  color: #1677ff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.rank-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: #1f2937;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rank-sub {
+  flex: none;
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.rank-value {
+  flex: none;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.rank-value.orange {
+  color: #ff4d22;
+}

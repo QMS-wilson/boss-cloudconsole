@@ -1,0 +1,70 @@
+<view class="page order-detail">
+  <!-- 单头 -->
+  <view class="u-card info">
+    <view class="info-top">
+      <text class="u-status {{bill.statusClass}}">{{bill.statusText}}</text>
+      <text class="bill-no">单号：{{bill.bill_no}}</text>
+    </view>
+    <view class="u-divider"></view>
+    <view class="cust-label">客户名称</view>
+    <view class="cust-name">{{bill.customerName}}</view>
+    <view class="time-row">
+      <text>建单时间</text>
+      <text>{{bill.ndateText}}</text>
+    </view>
+    <view class="time-row" wx:if="{{bill.auditing_time}}">
+      <text>审核时间</text>
+      <text>{{bill.auditing_time}}</text>
+    </view>
+  </view>
+
+  <!-- 商品清单 -->
+  <view class="u-card products">
+    <view class="sec-title">商品清单（{{bill.lineCount}} 行）</view>
+    <view class="u-divider"></view>
+    <view class="line" wx:for="{{bill.lines}}" wx:key="index">
+      <view class="line-name">{{item.name}}</view>
+      <view class="line-spec">
+        <text>{{item.hpbh}} · {{item.qtyText}} {{item.unit}} × ¥{{item.priceText}}</text>
+        <text class="line-amount">¥{{item.amountText}}</text>
+      </view>
+    </view>
+    <view class="u-divider"></view>
+    <view class="sum-row">
+      <view class="sum-left">
+        <view>商品总数 <text>{{bill.qtyText}} 件</text></view>
+        <view class="muted" wx:if="{{bill.amountHsText !== bill.amountText}}">未税 ¥{{bill.amountText}}</view>
+      </view>
+      <view class="sum-right">订单总计 <text>¥{{bill.amountHsText}}</text></view>
+    </view>
+  </view>
+
+  <!-- 备注 -->
+  <view class="u-card note" wx:if="{{bill.bz_xs}}">
+    <view class="sec-title">备注</view>
+    <view class="note-text">{{bill.bz_xs}}</view>
+  </view>
+
+  <!-- 不可改原因 -->
+  <view class="u-card reason" wx:if="{{!bill.editable && bill.editable_reasons.length}}">
+    <view class="sec-title">为何不可修改</view>
+    <view class="reason-item" wx:for="{{bill.editable_reasons}}" wx:key="*this">· {{item}}</view>
+  </view>
+
+  <view style="height: 60rpx"></view>
+
+  <!-- 底部操作 -->
+  <view class="sticky-action">
+    <button
+      wx:if="{{bill.editable}}"
+      class="u-btn ghost"
+      hover-class="btn-h"
+      bindtap="onEdit"
+    >修改销售单</button>
+    <button
+      wx:else
+      class="u-btn ghost disabled-btn"
+      bindtap="onShowReasons"
+    >{{bill.editable_reasons.length ? '该单不可修改' : '单据只读'}}</button>
+  </view>
+</view>

@@ -1,0 +1,147 @@
+.order-detail {
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
+  padding-bottom: 220rpx;
+}
+
+.info-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bill-no {
+  color: #59667a;
+  font-size: 30rpx;
+}
+
+.cust-label {
+  margin-top: 6rpx;
+  color: #8c98aa;
+  font-size: 26rpx;
+}
+
+.cust-name {
+  margin: 10rpx 0 26rpx;
+  font-size:38rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  color: #667287;
+  font-size: 28rpx;
+  margin-top: 14rpx;
+}
+
+.sec-title {
+  font-size:34rpx;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+.line {
+  padding: 20rpx 0;
+}
+
+.line-name {
+  font-size:34rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.line-spec {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 12rpx;
+  color: #526075;
+  font-size: 30rpx;
+}
+
+.line-amount {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 28rpx;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 16rpx;
+  gap: 20rpx;
+}
+
+.sum-left {
+  color: #4b5563;
+  font-size: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.sum-left text {
+  font-weight: 400;
+  color: #1f2937;
+}
+
+.sum-left .muted {
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.sum-right {
+  text-align: right;
+  font-size: 30rpx;
+  color: #4b5563;
+}
+
+.sum-right text {
+  display: block;
+  margin-top: 8rpx;
+  color: #ff4d22;
+  font-size:52rpx;
+  font-weight: 700;
+}
+
+.note-text {
+  margin-top: 14rpx;
+  font-size: 30rpx;
+  line-height: 1.65;
+  color: #2e394b;
+  white-space: pre-wrap;
+}
+
+.reason-item {
+  font-size: 26rpx;
+  color: #ff4d4f;
+  line-height: 1.8;
+}
+
+.sticky-action {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 2rpx solid #e3e7ed;
+  z-index: 30;
+}
+
+.sticky-action .u-btn {
+  width: 100%;
+}
+
+.disabled-btn {
+  color: #9ca3af;
+  border-color: #dfe3ea;
+}
+
+.btn-h {
+  opacity: 0.85;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V3 云端后台</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="logo"><span class="dot" id="statusDot"></span>V3 云端后台</div>
+    <div class="logo-sub">平台 · 多商户</div>
+    <nav id="nav">
+      <a data-v="merchants">商户<span class="badge" id="alertN" style="display:none">0</span></a>
+      <a data-v="monitor">监控</a>
+      <a data-v="audit">审计</a>
+      <a data-v="settings">设置</a>
+    </nav>
+    <div class="foot">
+      <div id="footOnline">—</div>
+      <div class="muted">数据截至 <span id="lastUpd">—</span></div>
+      <div><a id="legacyLink" href="/admin/legacy">旧版页面</a></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1 id="pageTitle">商户</h1>
+      <span class="chip" id="chipOnline" style="display:none"></span>
+      <span class="chip gray" id="chipStale" style="display:none"></span>
+      <span class="grow"></span>
+      <button class="btn ghost sm" id="btnRefresh">刷新</button>
+      <button class="btn gray sm" id="btnLogout">退出</button>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="toastWrap"></div>
+<div class="modal-mask" id="modalMask"><div class="modal" id="modalBox"></div></div>
+
+<script type="module" src="/admin/app.js"></script>
+</body>
+</html>

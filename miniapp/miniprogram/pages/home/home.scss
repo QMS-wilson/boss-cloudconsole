@@ -1,0 +1,237 @@
+.home-body {
+  padding: 36rpx 36rpx 0;
+}
+
+.greeting .g-name {
+  font-size:50rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+}
+
+.g-date {
+  margin-top: 12rpx;
+  color: #637084;
+  font-size: 28rpx;
+  margin-bottom: 34rpx;
+}
+
+/* 指标卡 */
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.metric {
+  width: 48.5%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 34rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 210rpx;
+  padding: 34rpx 36rpx;
+  margin: 0 0 26rpx;
+}
+
+.metric-h {
+  opacity: 0.8;
+}
+
+.m-label {
+  font-size: 26rpx;
+  color: #637084;
+}
+
+.m-value {
+  font-size:48rpx;
+  font-weight: 700;
+  color: #1f2937;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.m-value.blue {
+  color: #1677ff;
+}
+
+.m-value.orange {
+  color: #ff4d22;
+}
+
+/* 主按钮 */
+.create {
+  width: 100%;
+  box-sizing: border-box;
+  height: 122rpx;
+  margin: 42rpx 0 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  background: #1677ff;
+  color: #ffffff;
+  border-radius: 34rpx;
+  font-size:36rpx;
+  font-weight: 700;
+  line-height: 122rpx;
+  box-shadow: 0 16rpx 28rpx rgba(22, 119, 255, 0.22);
+}
+
+.create::after {
+  border: 0;
+}
+
+.create image {
+  width: 46rpx;
+  height: 46rpx;
+}
+
+.create-h {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+/* 快捷入口 */
+.quick-data {
+  margin-bottom: 44rpx;
+}
+
+.quick-row {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  background: #fff;
+  border-radius: 30rpx;
+  padding: 24rpx 26rpx;
+  margin-bottom: 20rpx;
+}
+
+.quick-h {
+  opacity: 0.85;
+}
+
+.quick-icon {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.quick-icon image {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.quick-icon.c-blue {
+  background: #eaf3ff;
+}
+
+.quick-icon.c-purple {
+  background: #f0edff;
+}
+
+.quick-icon.c-green {
+  background: #e8f7ee;
+}
+
+.quick-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-title {
+  font-size:28rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.quick-sub {
+  font-size: 24rpx;
+  color: #8c98aa;
+  margin-top: 4rpx;
+}
+
+.quick-chevron {
+  width: 34rpx;
+  height: 34rpx;
+  flex: none;
+}
+
+/* 最近销售单 */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size:34rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.section-more {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  color: #1677ff;
+  font-size: 28rpx;
+}
+
+.section-more image {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.order-card {
+  background: #ffffff;
+  border-radius: 34rpx;
+  padding: 34rpx 36rpx;
+  margin-bottom: 22rpx;
+}
+
+.order-h {
+  opacity: 0.9;
+}
+
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-id {
+  color: #97a3b5;
+  font-size: 26rpx;
+}
+
+.order-name {
+  margin-top: 20rpx;
+  font-size:32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.order-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx solid #edf0f3;
+  color: #99a5b6;
+  font-size: 26rpx;
+}
+
+.order-amount {
+  color: #1f2937;
+  font-size:36rpx;
+  font-weight: 700;
+}

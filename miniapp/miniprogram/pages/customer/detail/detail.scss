@@ -1,0 +1,175 @@
+.customer-detail {
+  padding: 30rpx 32rpx;
+  box-sizing: border-box;
+  padding-bottom: 220rpx;
+}
+
+.hero-card {
+  background: #1677ff;
+  border-radius: 36rpx;
+  color: #fff;
+  padding: 44rpx 40rpx;
+  margin-bottom: 28rpx;
+}
+
+.hc-name {
+  font-size:46rpx;
+  font-weight: 700;
+}
+
+.hc-meta {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: #d9e9ff;
+}
+
+.hc-trace {
+  display: inline-block;
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6rpx 16rpx;
+  border-radius: 10rpx;
+}
+
+.metrics {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 26rpx;
+}
+
+.metric.card {
+  flex: 1;
+  background: #fff;
+  border-radius: 30rpx;
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.m-label {
+  color: #637084;
+  font-size: 24rpx;
+}
+
+.m-value {
+  font-size:42rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.m-value.blue {
+  color: #1677ff;
+}
+
+.m-value.muted2 {
+  color: #c1c9d4;
+}
+
+.m-value.orange {
+  color: #ff4d22;
+}
+
+.m-value.ok {
+  color: #22c55e;
+}
+
+.contact {
+  margin-bottom: 30rpx;
+}
+
+.sec-title {
+  font-size:32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 24rpx;
+  color: #2c384a;
+  font-size: 30rpx;
+}
+
+.contact-row image {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.contact-tip {
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  color: #b7791f;
+  background: #fff8e4;
+  display: inline-block;
+  padding: 6rpx 14rpx;
+  border-radius: 8rpx;
+}
+
+.history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 6rpx 6rpx 20rpx;
+}
+
+.list-title {
+  font-size:34rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.list-tip {
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.history-card {
+  margin-bottom: 22rpx;
+}
+
+.card-h {
+  opacity: 0.9;
+}
+
+.hc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hc-no {
+  color: #97a3b5;
+  font-size: 26rpx;
+}
+
+.hc-amt {
+  margin-top: 18rpx;
+  font-size:38rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.hc-time {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.sticky-action {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 2rpx solid #e3e7ed;
+  z-index: 30;
+}
+
+.sticky-action .u-btn {
+  width: 100%;
+}

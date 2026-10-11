@@ -1,0 +1,76 @@
+<view class="page order-form edit-form">
+  <view class="form-main">
+    <view class="u-card bill-head">
+      <view class="bh-no">{{bill_no}}</view>
+      <text class="u-status waiting">未审核</text>
+    </view>
+
+    <view class="label">客户信息</view>
+    <view class="u-card customer-select" hover-class="row-h" bindtap="onPickCustomer">
+      <image class="cs-icon" src="/assets/icons/tab/user-a.svg" mode="aspectFit" />
+      <view class="cs-name">{{customer.name}}</view>
+      <view class="cs-right">
+        <text>重新选择</text>
+        <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+      </view>
+    </view>
+
+    <view class="form-label">
+      <view class="fl-title">已选商品（{{lines.length}}）</view>
+      <view class="fl-sub">点「删除」移除明细</view>
+    </view>
+
+    <view class="u-card product-line" wx:for="{{lines}}" wx:key="key">
+      <view class="product-head">
+        <view class="ph-main">
+          <view class="p-name">{{item.name}}</view>
+          <view class="p-spec">{{item.hpbh}}{{item.spec ? ' · ' + item.spec : ''}}</view>
+        </view>
+        <view class="trash" data-index="{{index}}" bindtap="onDeleteLine">
+          <image src="/assets/icons/trash.svg" mode="aspectFit" />
+        </view>
+      </view>
+      <view class="product-controls">
+        <view class="pc-price">单价：<text>¥{{item.priceText || '--'}}</text>
+          <text class="unit">{{item.unit}}</text>
+        </view>
+        <view class="counter">
+          <view class="ct-btn" data-index="{{index}}" data-step="-1" bindtap="onStep">−</view>
+          <input class="ct-input" type="digit" value="{{item.qtyText}}"
+                 data-index="{{index}}" bindinput="onQtyInput" />
+          <view class="ct-btn plus" data-index="{{index}}" data-step="1" bindtap="onStep">＋</view>
+        </view>
+      </view>
+      <view class="product-sub">
+        <text>总用量：{{item.qtyText || 0}} {{item.unit}}</text>
+        <text class="ps-amount">小计：¥{{item.amountText}}</text>
+      </view>
+      <view class="hint-line" wx:if="{{item.priceHint}}">{{item.priceHint}}</view>
+    </view>
+
+    <view class="add-product" hover-class="add-h" bindtap="onAddProduct">
+      <image src="/assets/icons/plus-blue.svg" mode="aspectFit" />
+      <text>添加商品</text>
+    </view>
+
+    <view class="label">订单备注</view>
+    <textarea
+      class="note-input"
+      placeholder="请输入备注信息（如：送货要求、包装规格、指定物流等）…"
+      value="{{note}}"
+      bindinput="onNote"
+      maxlength="500"
+    />
+
+    <view class="u-card total">
+      <text>已选 {{lines.length}} 种商品 | 共 {{totalQtyText}} 件</text>
+      <view class="total-right">合计<text>¥{{totalText}}</text></view>
+    </view>
+  </view>
+
+  <view class="sticky-action">
+    <button class="u-btn" loading="{{saving}}" disabled="{{saving}}" hover-class="btn-h" bindtap="onSave">
+      保存修改
+    </button>
+  </view>
+</view>

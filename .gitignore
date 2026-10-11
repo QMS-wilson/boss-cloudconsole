@@ -1,0 +1,43 @@
+# ---------------- Python ----------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# ---------------- 配置与密钥 ----------------
+# 真配置含 Agent 密钥 / admin 口令 / 令牌签名密钥，绝不入库。
+# 换环境请复制 cloud_config.example.json。
+config.json
+cloud_config.json
+cloud_config.json.bak*
+*.bak-*
+*.bak_*
+livecreds.local.py
+
+# ---------------- 日志与运行期产物 ----------------
+logs/
+*.log
+logs/prod_credentials.json
+
+# ---------------- 小程序前端 ----------------
+node_modules/
+miniprogram_npm/
+miniapp/dist/
+
+# ---------------- 编辑器 / 系统 ----------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ---------------- 本仓测试脚本（不进仓库，保留部署与运维工具） ----------------
+# 与 uniapp / Agent 两仓同一口径：check-*/verify-* 是"某一轮改动的验收门"，
+# 结论已写进 README；部署与运维工具（deploy_* / upload_cloud / sshtarget /
+# toolchain / provision-merchant / deprovision-merchant / start_dev / stop_dev）保留。
+scripts/check-*.py
+scripts/check_remote*.py
+scripts/verify-*.py
+scripts/dev-admin-preview.py

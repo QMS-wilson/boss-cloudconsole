@@ -1,0 +1,49 @@
+<view class="page product-list-page">
+  <view class="search">
+    <image src="/assets/icons/search.svg" mode="aspectFit" />
+    <input
+      class="search-input"
+      placeholder="输入产品名称 / 编号查询"
+      value="{{keyword}}"
+      confirm-type="search"
+      bindinput="onKeyword"
+      bindconfirm="onSearch"
+    />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+
+  <view class="hint">{{pickMode ? '点选产品加入销售单' : '点产品查看资料与库存'}}</view>
+
+  <view class="list-body">
+    <view wx:if="{{loading}}" class="u-loading">加载中…</view>
+    <view wx:elif="{{!rows.length}}" class="u-empty">
+      {{searched ? '没有匹配的产品' : '正在加载产品…'}}
+    </view>
+
+    <view
+      class="product-row"
+      wx:for="{{rows}}"
+      wx:key="hpbh"
+      data-index="{{index}}"
+      hover-class="row-h"
+      bindtap="onRow"
+    >
+      <view class="glyph">
+        <image src="/assets/icons/file-color.svg" mode="aspectFit" />
+      </view>
+      <view class="p-info">
+        <view class="p-name">{{item.name}}</view>
+        <view class="p-sub">{{item.hpbh}}{{item.spec ? ' · ' + item.spec : ''}}</view>
+        <view class="p-bottom">
+          <text class="p-price">{{item.priceText}}</text>
+          <text class="p-stock">{{item.stockText}}</text>
+        </view>
+      </view>
+      <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view wx:if="{{!pickMode}}" class="fab" hover-class="fab-hover" bindtap="onCreate">
+    <image src="/assets/icons/plus.svg" mode="aspectFit" />
+  </view>
+</view>

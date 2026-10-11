@@ -1,0 +1,75 @@
+<view class="page report-page">
+  <!-- 期间切换 -->
+  <view class="periods">
+    <view
+      wx:for="{{periods}}"
+      wx:key="key"
+      class="period {{index === activeIndex ? 'active' : ''}}"
+      data-index="{{index}}"
+      bindtap="onPeriod"
+    >{{item.label}}</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="u-loading">统计中…</view>
+
+  <block wx:else>
+    <!-- 销售汇总 -->
+    <view class="u-card summary-card">
+      <view class="sc-title">销售汇总（{{periodText}}）</view>
+      <view class="sc-main">
+        <view class="sc-amount">¥{{summary.salesAmountText}}</view>
+        <view class="sc-sub">{{summary.salesCount}} 单 · 均价 ¥{{summary.averageText}}</view>
+      </view>
+    </view>
+
+    <!-- 销售趋势 -->
+    <view class="u-card">
+      <view class="sec-title">销售趋势</view>
+      <view wx:if="{{!trend.length}}" class="empty-line">该期间没有销售单</view>
+      <view class="trend-row" wx:for="{{trend}}" wx:key="date">
+        <view class="tr-date">{{item.date}}</view>
+        <view class="tr-bar">
+          <view class="tr-in" style="width:{{item.barWidth}}%"></view>
+        </view>
+        <view class="tr-amount">¥{{item.amountText}}</view>
+      </view>
+    </view>
+
+    <!-- 应收汇总 -->
+    <view class="u-card">
+      <view class="sec-head">
+        <view class="sec-title">应收汇总</view>
+        <view class="sec-extra">合计 ¥{{receivable.totalText}}</view>
+      </view>
+      <view wx:if="{{!receivable.items.length}}" class="empty-line">没有应收记录</view>
+      <view class="rank-row" wx:for="{{receivable.items}}" wx:key="customerId">
+        <view class="rank-name">{{item.customerName}}</view>
+        <view class="rank-value orange">¥{{item.receivableText}}</view>
+      </view>
+    </view>
+
+    <!-- 客户排行 -->
+    <view class="u-card">
+      <view class="sec-title">客户销售排行</view>
+      <view wx:if="{{!custRank.length}}" class="empty-line">暂无数据</view>
+      <view class="rank-row" wx:for="{{custRank}}" wx:key="customerId">
+        <view class="rank-no">{{index + 1}}</view>
+        <view class="rank-name">{{item.customerName}}</view>
+        <view class="rank-sub">{{item.salesCount}} 单</view>
+        <view class="rank-value">¥{{item.amountText}}</view>
+      </view>
+    </view>
+
+    <!-- 商品排行 -->
+    <view class="u-card">
+      <view class="sec-title">商品销售排行</view>
+      <view wx:if="{{!prodRank.length}}" class="empty-line">暂无数据</view>
+      <view class="rank-row" wx:for="{{prodRank}}" wx:key="productId">
+        <view class="rank-no">{{index + 1}}</view>
+        <view class="rank-name">{{item.productName}}</view>
+        <view class="rank-sub">{{item.quantityText}}</view>
+        <view class="rank-value">¥{{item.amountText}}</view>
+      </view>
+    </view>
+  </block>
+</view>

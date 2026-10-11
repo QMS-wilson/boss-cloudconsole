@@ -1,0 +1,39 @@
+{
+  "server": {"host": "127.0.0.1", "port": 8000},
+  "auth": {
+    "portal_token": "换成-至少8位-随机入口令牌",
+    "clients": [
+      {"token": "dev-token-001", "name": "dev-client", "title": "示例店铺",
+       "agent": "shiwantongda", "access": "guest"}
+    ],
+    "agents": {"shiwantongda": "change-me"},
+    "merchants": {
+      "shiwantongda": {
+        "title": "示例商户",
+        "enabled": true,
+        "databases": ["shiwantongda"],
+        "clients": ["dev-client"]
+      }
+    },
+    "admin": {"password": "admin123"},
+    "users": [],
+    "require_openid": false,
+    "accounts": [],
+    "token_secret": "",
+    "access_ttl": 43200,
+    "refresh_ttl": 2592000,
+    "allow_openid_login": true
+  },
+  "wechat": {"appid": "", "secret": "", "enabled": false},
+  "rpc_timeout": 60,
+  "min_agent_version": "",
+  "max_inflight": 24,
+  "inflight_by_class": {
+    "report": {"cap": 3, "wait_sec": 8},
+    "print": {"cap": 2, "wait_sec": 25},
+    "quick": {"cap": 16, "wait_sec": 3}
+  },
+  "rate_limit": {"rate": 8.0, "burst": 20},
+  "log_dir": "logs",
+  "h5_root": "/var/www/jxc-h5"
+}

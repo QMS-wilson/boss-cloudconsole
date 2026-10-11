@@ -1,0 +1,36 @@
+<view class="page pick-customer">
+  <view class="search">
+    <image src="/assets/icons/search.svg" mode="aspectFit" />
+    <input
+      class="search-input"
+      placeholder="输入客户名称 / 编号 / 拼音"
+      value="{{keyword}}"
+      confirm-type="search"
+      bindinput="onKeyword"
+      bindconfirm="onSearch"
+    />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+
+  <view class="pick-body">
+    <view wx:if="{{loading}}" class="u-loading">搜索中…</view>
+    <view wx:elif="{{!rows.length}}" class="u-empty">
+      {{searched ? '没有匹配的客户' : '输入客户名称/编号/拼音搜索后选择'}}
+    </view>
+    <view
+      class="row"
+      wx:for="{{rows}}"
+      wx:key="code"
+      data-index="{{index}}"
+      hover-class="row-h"
+      bindtap="onRow"
+    >
+      <view class="row-info">
+        <view class="row-name">{{item.name}}</view>
+        <view class="row-sub">{{item.code}}{{item.category ? ' · ' + item.category : ''}}</view>
+      </view>
+      <text class="trace" wx:if="{{item.trace201}}">最近销价</text>
+      <image class="chev" src="/assets/icons/chevron.svg" mode="aspectFit" />
+    </view>
+  </view>
+</view>
