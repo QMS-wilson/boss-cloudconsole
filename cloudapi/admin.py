@@ -23,6 +23,7 @@ from .registry import AgentNoDbRouting
 from . import config as cfgmod
 from . import insights
 from . import security
+from . import sessions
 
 router = APIRouter()
 
@@ -880,7 +881,7 @@ async def user_add(request: Request):
         raise HTTPException(status_code=409, detail="该 openid 已存在")
     users.append(u)
     _save_cfg(cfg)
-    _audit(cfg, "admin.user.add", note=f"新增老板：{u['name']}（{u['openid']}）")
+    _audit(cfg, "admin.user.add", note=f"新增老板：{u['name']}（{security.oid_ref(u['openid'])}）")
     return {"ok": True, "user": u}
 
 
@@ -913,7 +914,7 @@ async def user_delete(openid: str, request: Request):
         raise HTTPException(status_code=404, detail="用户不存在")
     cfg["auth"]["users"] = new
     _save_cfg(cfg)
-    _audit(cfg, "admin.user.delete", note=f"删除老板 openid：{openid}")
+    _audit(cfg, "admin.user.delete", note=f"删除老板 openid：{security.oid_ref(openid)}")
     return {"ok": True}
 
 
@@ -965,3 +966,148 @@ async def account_password(username: str, request: Request):
         raise HTTPException(status_code=400, detail=str(exc))
     _audit(cfg, "admin.account.password", note=f"重置密码：{username}")
     return {"ok": True}
+
+
+# ---------------- 会话（谁在线 / 踢下线）2026-10-12 ----------------
+#
+# ★ 背景：令牌是 HMAC 无状态的，签发之后**撤不掉**；而 /auth/logout 以前也是空壳。
+#   这一组接口把「看」和「踢」补上：
+#     · 看          → GET  /sessions
+#     · 踢单条      → POST /sessions/{jti}/revoke         （精确：只断这一台设备）
+#     · 踢某人全部  → POST /accounts/{username}/revoke    （版本号 +1，O(1)）
+#     · 禁用账号    → POST /accounts/{username}/disable   （禁用 + 撤销 ⇒ 立即生效）
+#
+# ★ 为什么"踢单条"和"踢全部"必须分开：前者精确、后者粗暴。
+#   合成一个按钮，就会出现"我只想踢掉手机那条，结果把办公室电脑也踢了"。
+
+@router.get("/sessions")
+async def sessions_list(request: Request, online: int = 0, merchant: str = ""):
+    _require(request)
+    rows = sessions.list_sessions(merchant=(merchant or "").strip(),
+                                  only_online=bool(online))
+    return {"ok": True, "sessions": rows, "stats": sessions.stats()}
+
+
+@router.post("/sessions/{jti}/revoke")
+async def session_revoke(jti: str, request: Request):
+    _require(request)
+    cfg = request.app.state.cfg
+    if not sessions.revoke(jti, by="admin"):
+        raise HTTPException(status_code=404, detail="会话不存在，或已经被踢过")
+    _audit(cfg, "admin.session.revoke", note="踢出会话：%s…" % str(jti)[:12])
+    return {"ok": True}
+
+
+@router.post("/accounts/{username}/revoke")
+async def account_revoke(username: str, request: Request):
+    """踢掉该账号**全部**会话：令牌版本号 +1 ⇒ 它名下所有令牌立刻失效。"""
+    _require(request)
+    cfg = request.app.state.cfg
+    try:
+        tv = security.bump_token_version(cfg, username)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    dropped = sessions.drop_subject("account:" + str(username).strip().lower())
+    _audit(cfg, "admin.account.revoke",
+           note=f"踢出全部会话：{username}（清 {dropped} 条）")
+    return {"ok": True, "token_version": tv, "dropped": dropped}
+
+
+@router.post("/accounts/{username}/perms")
+async def account_perms(username: str, request: Request):
+    """只改权限位：不动商户绑定、不改口令、不碰禁用状态。
+
+    ★ 单独一个接口而不是复用 POST /accounts：后者是整条覆盖，
+      只传 username+perms 会把 stores/name/disabled 一起改掉。
+    """
+    _require(request)
+    cfg = request.app.state.cfg
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="请求体不是 JSON")
+    try:
+        accounts = security.set_account_perms(cfg, username, body.get("perms"))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    got = security.norm_perms(body.get("perms"))
+    _audit(cfg, "admin.account.perms",
+           note="改权限：%s → %s" % (username, "、".join(got) if got else "（无）"))
+    return {"ok": True, "accounts": accounts}
+
+
+@router.post("/accounts/{username}/disable")
+async def account_disable(username: str, request: Request):
+    """禁用 / 启用账号。**禁用顺带撤销** —— 否则已登录的人还能再用满 12 小时。"""
+    _require(request)
+    cfg = request.app.state.cfg
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        body = {}
+    disabled = bool((body or {}).get("disabled", True))
+    try:
+        info = security.set_account_disabled(cfg, username, disabled)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    dropped = (sessions.drop_subject("account:" + str(username).strip().lower())
+               if disabled else 0)
+    _audit(cfg, "admin.account.disable",
+           note=("禁用" if disabled else "启用") + f"账号：{username}（清 {dropped} 条会话）")
+    return {"ok": True, **info, "dropped": dropped}
+
+
+# ---------------- V3 操作员权限（2026-10-14） ----------------
+#
+# ★ 为什么单独一组、不能并进「应用账号」：
+#   V3 操作员是**账套库 UserInfo 里的人**（`v3:<商户>:<编号>`）——
+#   云端读不到那本库，也不能往人家的表里加字段。
+#   所以这里记一份"云端侧附加属性"：权限位 + 令牌版本号。
+# ★ 键必须是 `<商户码>:<编号>`：同一编号在两家商户是**两个不同的人**。
+# ★ 只存附加属性，不存口令、不存身份真值 —— 身份仍由客户机上的 V3 说了算。
+
+@router.get("/v3operators")
+async def v3operators_list(request: Request):
+    _require(request)
+    return {"ok": True, "operators": security.list_v3_operators(request.app.state.cfg)}
+
+
+@router.post("/v3operators/perms")
+async def v3operators_perms(request: Request):
+    """设置某个 V3 操作员的权限位（只碰 perms）。body: {code, uid, perms, name?}"""
+    _require(request)
+    cfg = request.app.state.cfg
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="请求体不是 JSON")
+    code = str((body or {}).get("code") or "").strip()
+    uid = str((body or {}).get("uid") or "").strip()
+    if not code or not uid:
+        raise HTTPException(status_code=400, detail="要给商户码与操作员编号")
+    ops = security.set_v3_perms(cfg, code, uid, (body or {}).get("perms"),
+                                name=str((body or {}).get("name") or ""))
+    got = security.norm_perms((body or {}).get("perms"))
+    _audit(cfg, "admin.v3op.perms", agent=code,
+           note="V3 操作员权限：%s:%s → %s" % (code, uid, "、".join(got) if got else "（无）"))
+    return {"ok": True, "operators": ops}
+
+
+@router.post("/v3operators/revoke")
+async def v3operators_revoke(request: Request):
+    """踢掉某 V3 操作员的全部会话（令牌版本号 +1）。body: {code, uid}"""
+    _require(request)
+    cfg = request.app.state.cfg
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="请求体不是 JSON")
+    code = str((body or {}).get("code") or "").strip()
+    uid = str((body or {}).get("uid") or "").strip()
+    if not code or not uid:
+        raise HTTPException(status_code=400, detail="要给商户码与操作员编号")
+    tv = security.bump_v3_token_version(cfg, code, uid)
+    dropped = sessions.drop_subject("v3:%s:%s" % (code, uid))
+    _audit(cfg, "admin.v3op.revoke", agent=code,
+           note="踢出 V3 操作员全部会话：%s:%s（清 %d 条）" % (code, uid, dropped))
+    return {"ok": True, "token_version": tv, "dropped": dropped}

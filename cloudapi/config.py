@@ -38,7 +38,11 @@ DEFAULTS = {
         "access_ttl": 43200,      # access token 12 小时
         "refresh_ttl": 2592000,   # refresh token 30 天
         # 开发期允许直接用 openid 换取多端令牌（正式环境建议关闭）
-        "allow_openid_login": True,
+        # ★ 2026-10-12 默认改为 **关**：openid 是客户端**自报**的标识，能自报就能换
+        #   12h access + 30d refresh —— 它不是一个凭据，只是一个人的名字。
+        #   三端走的都是 `provider: 'v3'`（账套里的操作员口令），没有任何一端需要这条通道；
+        #   要开的人必须在 cloud_config.json 里**显式**写 true（并确认微信登录已配好）。
+        "allow_openid_login": False,
     },
     # 微信小程序登录（code → openid），secret 只存服务器
     "wechat": {"appid": "", "secret": "", "enabled": False},
@@ -100,6 +104,16 @@ def load(path=None):
     #   线上那份配置是运维手改的，不靠"迁移脚本跑过一次"这种假设。
     if normalize_merchants(cfg):
         touched = True
+    if normalize_accounts(cfg):
+        touched = True
+    # ★ V3 操作员表的键归一小写 —— 必须做：不归的话 `system` 与 `SYSTEM`
+    #   会变成两条独立记录，其中一条**永远匹配不上**（2026-10-14 用户实测）。
+    #   逻辑放在 security.py 是因为要用它那份权限白名单（PERMS）；
+    #   而 config **不能模块级 import security**（security 反过来依赖 config）
+    #   ⇒ 这里延迟导入。运行时两个模块都已加载完，拿到的是完整模块。
+    from . import security as _security
+    if _security.normalize_v3operators(cfg):
+        touched = True
     if touched:
         try:
             save(cfg, path)      # 只在真的派生/迁移出内容时落一次盘
@@ -140,6 +154,11 @@ def merchant_of(cfg, code):
 REPORT_OPS = (
     "report.product.ranking",
     "report.customer.ranking",
+    # ★ 供应商排行与顾客排行同构（一张 JH/Gysdan 的聚合宽表），2026-10-12 才补进这一类：
+    #   漏掉时它落进 quick 池（16 位 / Agent 侧 8 线程），一家连着点几次就把轻活的位占满，
+    #   症状是"本地服务正忙"，而这正是分级闸门当初要治的那个病。
+    #   ★★ 两边必须一起加：Agent 的 `agent_daemon.HEAVY_OPS` 是同一条判据的另一半。
+    "report.supplier.ranking",
     "report.profit.summary",
     "report.customer.product.detail",
     "report.customer.statement",
@@ -256,6 +275,29 @@ def parse_databases(value):
             continue
         out.append(name)
     return out
+
+
+def normalize_accounts(cfg):
+    """给账号补上新字段的默认值（幂等，每次 load 都跑）。
+
+    ★ 为什么必须单独补：load() 里那段 `missing` 只补 `auth` **这一层**的键，
+      数组元素里的字段它管不着 —— 老配置里的账号没有 `perms` / `token_version`。
+      security.verify_token 要拿账号的 token_version 跟令牌里的 tv 比
+      （`int(... or 0)` 兜住了，能跑）；这里补上是让"配置里有什么"和
+      "后台/接口显示什么"保持一致，免得界面上一片空白让人以为功能没生效。
+    """
+    changed = False
+    accounts = ((cfg or {}).get("auth") or {}).get("accounts") or []
+    for a in accounts:
+        if not isinstance(a, dict):
+            continue
+        if "token_version" not in a:
+            a["token_version"] = 0
+            changed = True
+        if "perms" not in a:
+            a["perms"] = []
+            changed = True
+    return changed
 
 
 def normalize_merchants(cfg):

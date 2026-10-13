@@ -512,7 +512,16 @@ class AgentRegistry:
 
         ★ `database` / `actor` 都是从 `rpc` 透传下来的**帧字段**，空串就不带键；
           两条通道（WS 直连 / HTTP 轮询）都要带 —— 只带一条，换种连法身份就丢了。
+
+        ★★ 业务 params 里夹带的 `database` 一律剥掉（2026-10-12）：
+          Agent 那侧读账套名是"信封优先、params 兜底"（`v3agent/agent.py:handle_request`），
+          于是客户端在业务体里塞一个 `"database": "另一本账"` 就能**绕过云端
+          `security.resolve_database` 的 403 和"点名"审计**，直接把那台机器切到别的账上读。
+          越界既然只在云端判一次（判完才转下去），转下去之前就得保证
+          下面拿到的那本账确实是云端定下的那一本。
+          真要点名另一本账，走上面的 `database` 帧字段 —— 六个调用点都已经显式在传它。
         """
+        params = {k: v for k, v in (params or {}).items() if k != "database"}
         conn = self.agents.get(agent_name)
         if conn is not None:
             self._require_published(conn.ops, agent_name, op)

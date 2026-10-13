@@ -8,8 +8,9 @@ import * as merchants from "./views/merchants.js";
 import * as monitor from "./views/monitor.js";
 import * as audit from "./views/audit.js";
 import * as settings from "./views/settings.js";
+import * as sessions from "./views/sessions.js";
 
-const VIEWS = { merchants, monitor, audit, settings };
+const VIEWS = { merchants, monitor, audit, sessions, settings };
 const AUTO_SEC = 20;
 
 let current = null;

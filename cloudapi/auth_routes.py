@@ -15,9 +15,26 @@ from . import audit as auditmod
 from . import config as cfgmod
 from . import limit as limiter
 from . import security
+from . import sessions
 from . import business, tasks as tasks_mod
 
 router = APIRouter()
+
+
+def _client_info(request):
+    """登录来源（IP / User-Agent）—— 只用来在后台辨认"这条会话是谁在哪台设备上"。
+
+    ★ 取不到就返回空串：登录不该因为拿不到 IP 而失败。
+    ★ 优先 X-Forwarded-For —— 线上过了 nginx 反代，request.client.host 是 127.0.0.1，
+      只看它会得出"所有人都在同一台机器上登录"这种结论。
+    """
+    ip = str(request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    if not ip:
+        try:
+            ip = (request.client.host if request.client else "") or ""
+        except Exception:  # noqa: BLE001
+            ip = ""
+    return ip, str(request.headers.get("user-agent") or "")
 
 def _rest_endpoints():
     """从真实路由对象导出接口清单。
@@ -195,9 +212,15 @@ async def _login_v3(request, cfg, reg, body):
     uid = str(user.get("id") or login)
     uname = str(user.get("name") or uid)
     names = [str(c.get("name")) for c in cfgmod.clients_of_merchant(cfg, code) if c.get("name")]
+    _cip, _cua = _client_info(request)
     tokens = security.issue_token_pair(cfg, "v3:%s:%s" % (code, uid), uname,
                                         names, False, "v3", merchants=[code],
-                                        extra={"v3uid": uid, "v3name": uname})
+                                        extra={"v3uid": uid, "v3name": uname},
+                                        ip=_cip, ua=_cua,
+                                        # ★ 账套必须签到会话里（2026-10-14）：
+                                        #   每本账有自己的操作员集合，不记就答不出
+                                        #   "这个操作员此刻在哪本账上在线"。
+                                        database=db_name)
     stores = security.stores_for(cfg, reg, names, False)
     merchants = security.merchants_view(cfg, reg, names, False)
     _v3_audit(request, cfg, code, uid, "OK", True, 200,
@@ -211,6 +234,9 @@ async def _login_v3(request, cfg, reg, body):
         "authorized": bool(stores), "stores": stores, "merchants": merchants,
         "merchant": code,
         "database": str(resp.get("database") or db_name or ""),
+        # ★ 2026-10-14：V3 操作员**也能被授权** —— 权限存在云端侧的 v3operators 表里
+        #   （按 `商户码:编号`），因为他的身份在客户机的 UserInfo 里，云端没有他的账号记录。
+        "accountPerms": security.v3_perms_of(cfg, code, uid),
     }}
 
 
@@ -338,10 +364,11 @@ async def login(request: Request):
         stores = security.stores_for(cfg, reg, account.get("stores"), account.get("all_stores"))
         merchants = security.merchants_view(cfg, reg, account.get("stores"),
                                             account.get("all_stores"))
+        _cip, _cua = _client_info(request)
         tokens = security.issue_token_pair(
             cfg, "account:" + account["username"], account.get("name") or account["username"],
             [c["name"] for c in stores] if not account.get("all_stores") else [], account.get("all_stores"), "app",
-            merchants=[m["code"] for m in merchants])
+            merchants=[m["code"] for m in merchants], ip=_cip, ua=_cua)
         return {"ok": True, "data": {
             **tokens,
             "user": {"username": account["username"], "name": account.get("name") or account["username"], "kind": "app"},
@@ -349,11 +376,19 @@ async def login(request: Request):
             # ★ 前端拿这个跟 URL 前缀（X-Merchant 的来源）比对：不匹配就是"用错了入口"，
             #   不能让第二家的链接顶着第一家的会话打开（2026-09-26 实测过的那种串号）。
             "merchant": (merchants[0]["code"] if len(merchants) == 1 else ""),
+            # ★ 2026-10-12：把账号的权限位带给前端 —— App 端据此决定「我的」页里
+            #   显不显示「成员管理」入口。★ 字段名刻意不叫 perms：V3 操作员登录那边
+            #   已经用 `perms` 装它自己那套权限字典，同名会互相污染。
+            "accountPerms": security.norm_perms(account.get("perms")),
         }}
 
     if provider in ("wechat", "openid"):
         if provider == "openid":
-            if cfg["auth"].get("allow_openid_login", True) is False:
+            # ★ 默认**关**（2026-10-12）：判据从"显式写了 false 才拦"改成"没显式写 true 就拦"。
+            #   openid 是客户端自报的标识（X-Openid 带头里就能报），能自报就能换令牌，
+            #   把它当登录方式等于"知道某人 openid 的人就是某人"。
+            #   配置文件里没这个键、或值为空/0/false 一律拒绝；要开得写 `"allow_openid_login": true`。
+            if cfg["auth"].get("allow_openid_login", False) is not True:
                 return JSONResponse(status_code=403, content={
                     "ok": False, "error": {"code": "OPENID_LOGIN_DISABLED", "message": "当前环境不允许 openid 直接登录"}})
             openid = str(body.get("openid") or "").strip()
@@ -391,14 +426,17 @@ async def login(request: Request):
         all_stores = bool((user or {}).get("all_clients"))
         stores = security.stores_for(cfg, reg, names, all_stores) if user else []
         merchants = security.merchants_view(cfg, reg, names, all_stores) if user else []
+        _cip, _cua = _client_info(request)
         tokens = security.issue_token_pair(
             cfg, "wx:" + openid, (user or {}).get("name") or "", names, all_stores, "wechat",
-            merchants=[m["code"] for m in merchants])
+            merchants=[m["code"] for m in merchants], ip=_cip, ua=_cua)
         return {"ok": True, "data": {
             **tokens,
             "user": {"openid": openid, "name": (user or {}).get("name") or "", "kind": "wechat"},
             "authorized": bool(stores), "stores": stores, "merchants": merchants,
             "merchant": (merchants[0]["code"] if len(merchants) == 1 else ""),
+            # 微信登录没有平台账号 ⇒ 没有会话管理权限
+            "accountPerms": [],
         }}
 
     return JSONResponse(status_code=400, content={
@@ -448,10 +486,15 @@ async def refresh(request: Request):
         extra = {k: claims[k] for k in ("v3uid", "v3name") if claims.get(k)}
     stores = security.stores_for(cfg, reg, names, all_stores)
     merchants = security.merchants_view(cfg, reg, names, all_stores)
+    _cip, _cua = _client_info(request)
     tokens = security.issue_token_pair(cfg, claims.get("sub"), claims.get("name"),
                                        names if not all_stores else [], all_stores,
                                        claims.get("kind") or "app",
-                                       merchants=[m["code"] for m in merchants], extra=extra)
+                                       merchants=[m["code"] for m in merchants], extra=extra,
+                                       ip=_cip, ua=_cua,
+                                       # 续期要**沿用原令牌的账套**，否则会话表里那条
+                                       # 会被刷新成"没账套"，显示上忽然空了
+                                       database=claims.get("db") or "")
     return {"ok": True, "data": {**tokens, "authorized": bool(stores), "stores": stores,
                                 "merchants": merchants,
                                 "merchant": (merchants[0]["code"] if len(merchants) == 1 else "")}}
@@ -459,7 +502,157 @@ async def refresh(request: Request):
 
 @router.post("/api/v1/auth/logout")
 async def logout(request: Request):
-    return {"ok": True, "data": {"message": "已退出（客户端请丢弃本地令牌）"}}
+    """登出：**真的把这条会话撤掉**。
+
+    ★ 2026-10-12 之前这里是空壳 —— 服务端什么都不做，只回一句
+      "客户端请丢弃本地令牌"。后果：登出之后那条 token 依然有效满 12 小时
+      （ACCESS_TTL），等于"退出了但没退"。现在把 jti 标成 revoked，
+      security.verify_token 下一跳就会拒它。
+    """
+    cfg = request.app.state.cfg
+    claims = security.verify_token(cfg, security.bearer(request), "access")
+    jti = str((claims or {}).get("jti") or "")
+    if jti:
+        sessions.revoke(jti, by="logout")
+    return {"ok": True, "data": {"message": "已退出"}}
+
+
+# ---------------- 会话（App 端：谁在线 / 踢下线）2026-10-12 ----------------
+#
+# ★ 权限：看要 `sessions.view`、踢要 `sessions.kick`（在后台「设置 → 应用账号」里勾）。
+#   这两个权限位签在令牌的 perms 里，所以 App 端"显不显示入口"和云端"拦不拦"
+#   依据的是同一份数据，不会出现"界面给了按钮、点了 403"。
+# ★ 范围：**只能看/踢自己商户的会话**。平台账号（带 mkts 的）才能跨商户。
+
+def _has_perm(claims, perm):
+    return perm in list((claims or {}).get("perms") or [])
+
+
+def _scope_codes(cfg, claims):
+    """这条令牌能覆盖哪些商户码。"""
+    return [c for c in security.claims_merchants(cfg, claims)
+            if cfgmod.merchant_of(cfg, c)]
+
+
+def _in_scope(rec, codes):
+    if not codes:
+        return False
+    if str(rec.get("mkt") or "") in codes:
+        return True
+    return any(m in codes for m in (rec.get("mkts") or []))
+
+
+def _no_perm(code, msg):
+    return JSONResponse(status_code=403, content={
+        "ok": False, "error": {"code": code, "message": msg}})
+
+
+@router.get("/api/v1/sessions")
+async def app_sessions(request: Request):
+    """App 端查看在线会话（按自己的商户过滤）。"""
+    cfg = request.app.state.cfg
+    claims = security.verify_token(cfg, security.bearer(request), "access")
+    if not claims:
+        return JSONResponse(status_code=401, content={
+            "ok": False, "error": {"code": "UNAUTHORIZED", "message": "缺少或无效的令牌"}})
+    if not _has_perm(claims, "sessions.view"):
+        return _no_perm("NO_PERMISSION", "没有查看成员的权限，请联系管理员开通")
+    online = str(request.query_params.get("online") or "").lower() in ("1", "true", "yes")
+    codes = _scope_codes(cfg, claims)
+    rows, seen = [], set()
+    for code in codes:
+        # ★ 只给 **V3 操作员** 的会话（2026-10-14）：与应用账号一样，
+        #   App 端的成员管理看的是"同商户的操作员"，**不是**平台账号 ——
+        #   平台账号属云端那一层、还可能跨商户，不该出现在任何客户端上。
+        #   只有云端后台能看全部（那本来就是平台运营视角）。
+        for r in sessions.list_sessions(merchant=code, only_online=online,
+                                        kinds=["v3"]):
+            if r["jti"] in seen:      # 一个会话可能同时落在多商户里，去重
+                continue
+            seen.add(r["jti"])
+            rows.append(r)
+    rows.sort(key=lambda r: r.get("last_seen") or 0, reverse=True)
+    return {"ok": True, "data": {
+        "sessions": rows,
+        "stats": {"total": len(rows),
+                  "online": sum(1 for r in rows if r.get("online")),
+                  "window": sessions.ONLINE_WINDOW},
+        "perms": list(claims.get("perms") or []),
+        "merchants": codes,
+    }}
+
+
+@router.post("/api/v1/sessions/revoke")
+async def app_sessions_revoke(request: Request):
+    """App 端踢出。body 二选一：
+
+      { "jti": "…" }            踢掉这一条会话（精确：只断这一台设备）
+      { "username": "kefu" }    踢掉该账号**全部**会话
+
+    ★ 两者都要落在自己的商户范围内才允许 —— 否则等于给了一家踢别家的能力。
+    """
+    cfg = request.app.state.cfg
+    claims = security.verify_token(cfg, security.bearer(request), "access")
+    if not claims:
+        return JSONResponse(status_code=401, content={
+            "ok": False, "error": {"code": "UNAUTHORIZED", "message": "缺少或无效的令牌"}})
+    if not _has_perm(claims, "sessions.kick"):
+        return _no_perm("NO_PERMISSION", "没有踢出成员的权限，请联系管理员开通")
+
+    body = await _body(request)
+    jti = str(body.get("jti") or "").strip()
+    username = str(body.get("username") or "").strip().lower()
+    if not jti and not username:
+        return JSONResponse(status_code=400, content={
+            "ok": False, "error": {"code": "BAD_REQUEST",
+                                   "message": "要么给 jti（踢这一条），要么给 username（踢该账号全部）"}})
+    codes = _scope_codes(cfg, claims)
+    me = str(claims.get("sub") or "")
+
+    if jti:
+        rec = sessions.get(jti)
+        if rec is None:
+            return JSONResponse(status_code=404, content={
+                "ok": False, "error": {"code": "NOT_FOUND", "message": "会话不存在"}})
+        if not _in_scope(rec, codes):
+            return _no_perm("OUT_OF_SCOPE", "这条会话不在你的权限范围内")
+        if str(rec.get("sub") or "") == me and not body.get("self"):
+            # 防手滑：别把自己踢了（真要踢自己，传 self=true）
+            return JSONResponse(status_code=400, content={
+                "ok": False, "error": {"code": "SELF_KICK",
+                                       "message": "这是你自己的登录。确定要退出的请用「退出登录」"}})
+        sessions.revoke(jti, by="app:" + me)
+        return {"ok": True, "data": {"revoked": 1}}
+
+    target = str(body.get("subject") or "").strip()
+    if not target and username:
+        target = "account:" + username
+    if not target:
+        return JSONResponse(status_code=400, content={
+            "ok": False, "error": {"code": "BAD_REQUEST",
+                                   "message": "给 jti（踢这一条）、subject 或 username（踢该主体全部）"}})
+    kd, kcode, kuid = security.subject_kind(target)
+    if kd == "v3" and kcode and kcode not in codes:
+        return _no_perm("OUT_OF_SCOPE", "这个操作员不在你的权限范围内")
+    mine = [r for r in sessions.list_sessions()
+            if str(r.get("sub") or "") == target and _in_scope(r, codes)]
+    if not mine:
+        return _no_perm("OUT_OF_SCOPE", "这个主体不在你的权限范围内")
+    if target == me:
+        return JSONResponse(status_code=400, content={
+            "ok": False, "error": {"code": "SELF_KICK",
+                                   "message": "不能把自己名下的会话全部踢掉"}})
+    if kd == "account":
+        tv = security.bump_token_version(cfg, kuid)
+    elif kd == "v3":
+        # V3 操作员走云端侧那张表 —— 不这么做的话这里会 404"账号不存在"
+        tv = security.bump_v3_token_version(cfg, kcode, kuid)
+    else:
+        return JSONResponse(status_code=400, content={
+            "ok": False, "error": {"code": "BAD_SUBJECT",
+                                   "message": "认不出的主体：%s" % target}})
+    dropped = sessions.drop_subject(target)
+    return {"ok": True, "data": {"revoked": dropped, "token_version": tv}}
 
 
 @router.get("/api/v1/auth/me")

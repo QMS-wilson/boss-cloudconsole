@@ -35,6 +35,12 @@ def allow(key, rate=None, burst=None):
         cutoff = now - 300
         for k in [k for k, (t, s) in BUCKETS.items() if s < cutoff][:MAX_KEYS // 2]:
             BUCKETS.pop(k, None)
+        # ★ REJECTS 必须跟着清（2026-10-12）：原先只有 BUCKETS 有上限，
+        #   REJECTS 是**只增不减**的 —— 每一个被拒过的 (客户端, op) 组合都永久留在内存里。
+        #   它唯一的用处是让监控页看见"这家被拒过几次"，不值得用无界内存去换。
+        #   先算列表再删，不许在迭代 dict 的同时改它。
+        for k in [k for k in REJECTS if k not in BUCKETS]:
+            REJECTS.pop(k, None)
     return True, 0.0
 
 

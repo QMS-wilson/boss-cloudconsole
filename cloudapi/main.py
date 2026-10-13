@@ -7,6 +7,7 @@ import logging
 import uvicorn
 
 from . import config as cfgmod
+from . import sessions
 from .server import create_app
 
 
@@ -18,6 +19,9 @@ def main():
     args = parser.parse_args()
 
     cfg = cfgmod.load(args.config)
+    # ★ 会话表落盘位置跟着配置走（同目录的 sessions.json）—— 必须在任何请求到达之前
+    #   定好，否则第一批登录会把会话写到工作目录，重启后对不上账。
+    sessions.configure(cfg)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     host = args.host or cfg["server"]["host"]
     port = args.port or int(cfg["server"]["port"])

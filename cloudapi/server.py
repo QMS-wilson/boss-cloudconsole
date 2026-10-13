@@ -19,6 +19,7 @@ from .auth_routes import router as auth_router
 from .business import router as business_router
 from . import audit as auditmod
 from . import security
+from . import sessions
 from . import __version__
 from .tasks import router as tasks_router
 from .registry import (AgentBadOp, AgentBadSecret, AgentBusy, AgentNameConflict,
@@ -72,10 +73,19 @@ def _client_auth_error(cfg, client, openid):
     return None
 
 
+RECENT_LOGINS_MAX = 500
+
+
 def _record_login(app, client_label, openid):
-    if openid:
-        app.state.recent_logins[openid] = {"client": client_label, "openid": openid,
-                                           "ts": time.time()}
+    if not openid:
+        return
+    bucket = app.state.recent_logins
+    bucket[openid] = {"client": client_label, "openid": openid, "ts": time.time()}
+    # ★ 这个表的键是**客户端自报的 X-Openid**，不限长度就会被人用一堆随机 openid
+    #   把云端内存喂胖（后台那个「最近登录」面板只需要最近的几条）。
+    if len(bucket) > RECENT_LOGINS_MAX:
+        for k in sorted(bucket, key=lambda x: bucket[x].get("ts") or 0)[:len(bucket) - RECENT_LOGINS_MAX]:
+            bucket.pop(k, None)
 
 
 def _client_online(cfg, reg, client):
@@ -107,6 +117,10 @@ def create_app(cfg):
     app.state.cfg = cfg
     app.state.registry = reg
     app.state.recent_logins = {}
+    # ★ 会话表落盘位置（与 cloud_config.json 同目录的 sessions.json）。
+    #   幂等；main() 里已经调过一次，这里再调是为了直接 create_app 的场合
+    #   （测试、嵌入运行）也能落到同一个地方。
+    sessions.configure(cfg)
 
     # ---- 后台页面：新版是多文件（原生 ES module），旧版整页保留做回退 ----
     ADMIN_DIR = os.path.join(BASE_DIR, "web", "admin")
@@ -292,7 +306,7 @@ def create_app(cfg):
                                             user.get("clients") if user else [],
                                             bool(user.get("all_clients")) if user else False)
         _audit(cfg, security.audit_entry(request, client, None, op="me", ok=True,
-                                        note="openid=%s 店铺数=%d" % (openid, len(stores))))
+                                        note="openid=%s 店铺数=%d" % (security.oid_ref(openid), len(stores))))
         return {"ok": True, "openid": openid,
                 "name": user.get("name") if user else "",
                 "authorized": bool(user and stores),
@@ -336,6 +350,98 @@ def create_app(cfg):
             return JSONResponse({"ok": False, "error": "bad secret"}, status_code=403)
         reg.http_result(name, body.get("response") or {})
         return {"ok": True}
+
+    # ---- 会话（本地控制台用）2026-10-12 ----
+    #
+    # ★ 鉴权与 /agent/poll 完全一致：body 里 agent + secret 比对 cfg.auth.agents。
+    #   本地控制台用它**本来就有的** agent.secret —— 不为这个功能新发一套密钥
+    #   （少一套密钥 = 少一处会过期、会配错、会在换机器时忘记改的东西）。
+    # ★ 不做商户过滤：这台主机就是老板的，本机控制台看到全部在线会话是预期行为
+    #   （用户明确说过"只有老板能接触主机，没有安全顾虑"）。要收窄时带上 merchant。
+
+    def _agent_ok(body):
+        name = str(body.get("agent") or "").strip()
+        want = reg.cfg["auth"].get("agents", {}).get(name)
+        if not name or want != str(body.get("secret") or ""):
+            return ""
+        return name
+
+    @app.post("/agent/sessions")
+    async def agent_sessions(request: Request):
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"ok": False, "error": "bad json"}, status_code=400)
+        if not _agent_ok(body):
+            return JSONResponse({"ok": False, "error": "bad secret"}, status_code=403)
+        kk = str(body.get("kind") or "").strip()
+        rows = sessions.list_sessions(merchant=str(body.get("merchant") or "").strip(),
+                                      only_online=bool(body.get("online")),
+                                      kinds=[kk] if kk else None)
+        # ★ stats 要按**过滤后**的结果重算：直接回 sessions.stats() 是全表口径，
+        #   本地控制台明明只发了 kind=v3，统计里却带着平台账号的条数 —— 对不上账。
+        st = sessions.stats()
+        st["total"] = len(rows)
+        st["live"] = sum(1 for r in rows if not r.get("revoked"))
+        st["online"] = sum(1 for r in rows if r.get("online"))
+        return {"ok": True, "sessions": rows, "stats": st}
+
+    @app.post("/agent/sessions/revoke")
+    async def agent_sessions_revoke(request: Request):
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"ok": False, "error": "bad json"}, status_code=400)
+        name = _agent_ok(body)
+        if not name:
+            return JSONResponse({"ok": False, "error": "bad secret"}, status_code=403)
+        jti = str(body.get("jti") or "").strip()
+        subject = str(body.get("subject") or "").strip()
+        username = str(body.get("username") or "").strip().lower()
+        if jti:
+            if not sessions.revoke(jti, by="agent:" + name):
+                return JSONResponse({"ok": False, "error": "会话不存在，或已被踢过"},
+                                    status_code=404)
+            return {"ok": True, "revoked": 1}
+        # ★ subject 优先（`account:xxx` / `v3:<商户>:<编号>`）：V3 操作员不在平台账号表里，
+        #   拿 username 拼出来的 `account:<编号>` 是查不到的 —— 那样"踢出全部"对
+        #   V3 操作员会 404，而用户看到的只是"踢不动"（2026-10-14 修）。
+        if not subject and username:
+            subject = "account:" + username
+        if subject:
+            kd, kcode, kuid = security.subject_kind(subject)
+            try:
+                if kd == "account":
+                    tv = security.bump_token_version(reg.cfg, kuid)
+                elif kd == "v3":
+                    tv = security.bump_v3_token_version(reg.cfg, kcode, kuid)
+                else:
+                    return JSONResponse({"ok": False, "error": "认不出的主体：%s" % subject},
+                                        status_code=400)
+            except ValueError as exc:
+                return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+            return {"ok": True, "revoked": sessions.drop_subject(subject),
+                    "token_version": tv}
+        return JSONResponse({"ok": False, "error": "要么给 jti，要么给 subject/username"},
+                            status_code=400)
+
+    @app.post("/agent/accounts/disable")
+    async def agent_account_disable(request: Request):
+        """本地控制台禁用/启用账号 —— 用户要的"云端＋本地双重控制"里的本地那一半。"""
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"ok": False, "error": "bad json"}, status_code=400)
+        if not _agent_ok(body):
+            return JSONResponse({"ok": False, "error": "bad secret"}, status_code=403)
+        username = str(body.get("username") or "").strip().lower()
+        disabled = bool(body.get("disabled", True))
+        try:
+            info = security.set_account_disabled(reg.cfg, username, disabled)
+        except ValueError as exc:
+            return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+        dropped = sessions.drop_subject("account:" + username) if disabled else 0
+        return {"ok": True, **info, "dropped": dropped}
 
     @app.post("/api/v1/rpc")
     async def rpc(request: Request):

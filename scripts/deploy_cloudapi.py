@@ -22,6 +22,8 @@ import argparse
 import hashlib
 import os
 import posixpath
+import re
+import shlex
 import sys
 import time
 
@@ -249,8 +251,23 @@ def restart_and_check(cli):
 
 def restore(cli, name):
     src = name if name.startswith("/") else posixpath.join(REMOTE_ROOT, name)
+    # ★★ 这条命令以 **root** 跑 `rm -rf`，所以路径必须先"长对"再拼进命令（2026-10-12 修）。
+    #   原来两处都不加引号：目录名里带空格会把参数拆断，带 `;` / `&&` 就是命令注入，
+    #   而它前面正好是一条 rm -rf /opt/v3cloud/cloudapi。
+    #   备份目录是本脚本自己建的（`cloudapi.bak-<时间戳>`），就按那个形状卡死 ——
+    #   不匹配直接停手，别拿"运维大概不会乱填"当输入校验。
+    base = posixpath.basename(src.rstrip("/"))
+    ok_shape = (posixpath.dirname(src.rstrip("/")) == REMOTE_ROOT
+                and re.match(r"^cloudapi\.bak-[0-9]{8}-[0-9]{6}$", base or ""))
+    if not ok_shape:
+        print("  ✗ 拒绝还原：%r 不是一个本脚本产出的备份目录"
+              "\n    备份必须长成 %s/cloudapi.bak-YYYYMMDD-HHMMSS（先 --list-backups 看有哪些）"
+              % (name, REMOTE_ROOT))
+        return False
+    src = posixpath.join(REMOTE_ROOT, base)
+    q = shlex.quote
     code, o, e = run(cli, "test -d %s && rm -rf %s && cp -a %s %s && echo RESTORED"
-                     % (src, REMOTE_API, src, REMOTE_API))
+                     % (q(src), q(REMOTE_API), q(src), q(REMOTE_API)))
     print("  还原:", o or e)
     if "RESTORED" in o:
         code, o, e = run(cli, "systemctl restart %s && sleep 3 && systemctl is-active %s"

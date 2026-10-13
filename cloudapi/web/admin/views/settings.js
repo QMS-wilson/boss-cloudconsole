@@ -14,7 +14,8 @@ function $(id) { return document.getElementById(id); }
 export async function mount(el) {
   el.innerHTML = `<div class="tabs" id="tabs"></div><div id="tabBody"></div>`;
   const tabs = [["params", "平台参数"], ["agents", "Agent 登记"], ["tokens", "客户端令牌"],
-                ["accounts", "应用账号"], ["users", "老板授权"], ["rpc", "调试工具"]];
+                ["accounts", "应用账号"], ["v3op", "V3 操作员"], ["users", "老板授权"],
+                ["rpc", "调试工具"]];
   $("tabs").innerHTML = tabs.map(([k, n]) => `<div data-t="${k}" class="${k === tab ? "on" : ""}">${n}</div>`).join("");
   $("tabs").querySelectorAll("[data-t]").forEach(d =>
     d.addEventListener("click", () => { tab = d.dataset.t; mount(el); }));
@@ -29,6 +30,7 @@ async function renderTab() {
     if (tab === "agents") return await agents(b);
     if (tab === "tokens") return await tokens(b);
     if (tab === "accounts") return await accounts(b);
+    if (tab === "v3op") return await v3ops(b);
     if (tab === "users") return await users(b);
     return await rpc(b);
   } catch (e) { b.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; }
@@ -202,19 +204,38 @@ async function tokens(b) {
 }
 
 /* ---------------- 应用账号 ---------------- */
+
+// 可分配的权限位。★ 真源在云端 security.PERMS，这里只是把它列出来给人勾 ——
+// 接口那边还会再校验一次，所以界面只是入口，不是安全边界。
+const PERMS = [
+  ["sessions.view", "成员管理（看在线）"],
+  ["sessions.kick", "踢出成员"],
+];
+
+function permBoxes(a) {
+  const has = a.perms || [];
+  return PERMS.map(([k, label]) =>
+    `<label class="row" style="margin:0 14px 0 0;white-space:nowrap">` +
+    `<input type="checkbox" class="aPerm" data-user="${esc(a.username)}" value="${esc(k)}"` +
+    `${has.indexOf(k) >= 0 ? " checked" : ""}> ${esc(label)}</label>`).join("");
+}
+
 async function accounts(b) {
   const st = await api("/api/admin/state");
   const codes = (S.health || []).map(m => m.code);
   b.innerHTML = `<div class="card"><h2>应用账号<span class="r">${(st.accounts || []).length} 个</span></h2>
-    ${U.table([["账号"], ["姓名"], ["可及商户"], ["状态"], [""]],
+    ${U.table([["账号"], ["姓名"], ["可及商户"], ["权限"], ["状态"], [""]],
       (st.accounts || []).map(a => `<tr>
         ${U.td(esc(a.username), "账号")}${U.td(esc(a.name || ""), "姓名")}
         ${U.td((a.all_stores ? U.tag("全平台可达", "warn") : esc((a.stores || []).join("、"))), "可及商户")}
+        ${U.td(permBoxes(a), "权限")}
         ${U.td(a.disabled ? U.tag("已禁用", "off") : U.tag("正常", "on"), "状态")}
         ${U.td(`<button class="btn link" data-pw="${esc(a.username)}">重置口令</button>
                 <button class="btn link" data-adel="${esc(a.username)}">删除</button>`, "")}</tr>`).join(""))}
     <div class="muted small" style="margin-top:8px">★ 客户账号必须只绑自己那一家。开了「全平台可达」，
-    在裸 IP 入口（不带商户前缀）上所有请求都会因为"没点名商户"被拒 —— 客户的老书签当场进不去，这事真发生过。</div>
+    在裸 IP 入口（不带商户前缀）上所有请求都会因为"没点名商户"被拒 —— 客户的老书签当场进不去，这事真发生过。<br>
+    ★ 权限勾选**改完立刻生效**：勾上「成员管理」后，该账号在 App 的「我的」页会出现入口
+    （已经登录的需重新登录一次才拿到新权限）；云端会话接口那边还会再校验一次，双保险。</div>
   </div>
   <div class="card"><h2>新增 / 修改账号</h2><div class="row">
     <input id="aUser" placeholder="账号名" style="min-width:140px">
@@ -222,16 +243,39 @@ async function accounts(b) {
     <input id="aName" placeholder="姓名" style="min-width:120px"></div>
     <div class="row" style="margin-top:8px">${codes.map(c =>
       `<label class="row" style="margin:0 10px 0 0"><input type="checkbox" class="aCode" value="${esc(c)}"> ${esc(c)}</label>`).join("")}
-      <button class="btn" id="aSave">保存</button></div></div>`;
+      ${PERMS.map(([k, label]) =>
+        `<label class="row" style="margin:0 0 0 14px;white-space:nowrap"><input type="checkbox" class="aPermNew" value="${esc(k)}"> ${esc(label)}</label>`).join("")}
+      </div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="aSave">保存</button></div></div>`;
   $("aSave").addEventListener("click", async () => {
     try {
       await api("/api/admin/accounts", "POST", { username: $("aUser").value.trim(),
         password: $("aPw").value, name: $("aName").value.trim(),
         stores: Array.from(document.querySelectorAll(".aCode:checked")).map(x => x.value),
-        all_stores: false });
+        all_stores: false,
+        perms: Array.from(document.querySelectorAll(".aPermNew:checked")).map(x => x.value) });
       toast("已保存"); await loadHealth(true); renderTab();
     } catch (e) { toast(e.message, true); }
   });
+  // ★ 行内权限勾选：勾一下立刻保存。
+  //   为什么不做成"填整表单再保存"：那个表单是整条覆盖，改权限还得把商户重新勾对，
+  //   漏勾一次就把账号的可及商户清空了 —— 让改权限只需要改权限。
+  //   ★ 失败时把勾**回到原样**，不让界面显示一个没存上的状态。
+  b.querySelectorAll(".aPerm").forEach(x => x.addEventListener("change", async () => {
+    const user = x.dataset.user;
+    const boxes = Array.from(b.querySelectorAll(".aPerm"))
+      .filter(y => y.dataset.user === user);
+    const perms = boxes.filter(y => y.checked).map(y => y.value);
+    try {
+      await api("/api/admin/accounts/" + encodeURIComponent(user) + "/perms",
+        "POST", { perms });
+      toast("权限已保存");
+      renderTab();
+    } catch (e) {
+      toast(e.message, true);
+      x.checked = !x.checked;
+    }
+  }));
   b.querySelectorAll("[data-pw]").forEach(x => x.addEventListener("click", async () => {
     const pw = prompt(`为「${x.dataset.pw}」设置新口令（至少 8 位）：`);
     if (!pw) return;
@@ -242,6 +286,83 @@ async function accounts(b) {
     if (!confirm(`删除账号「${x.dataset.adel}」？该账号的登录态会立刻失效。`)) return;
     try { await api("/api/admin/accounts/" + encodeURIComponent(x.dataset.adel), "DELETE", {}); renderTab(); }
     catch (e) { toast(e.message, true); }
+  }));
+}
+
+/* ---------------- V3 操作员权限 ---------------- */
+//
+// ★ 为什么单独一页、不能并进「应用账号」：那张表是**平台账号**（账号+口令登录），
+//   而 V3 操作员是**账套库 UserInfo 里的人**（`v3:<商户>:<编号>`）——
+//   云端读不到那本库，也不能往人家的表里加字段。所以这里只记"云端侧附加属性"。
+// ★ 键是 `<商户码>:<编号>`：同一编号在两家商户是**两个不同的人**。
+// ★ 这里只能管"云端能管的事"（App 里能不能看/踢在线成员）。
+//   要**停用这个人本身**，得去财鲸 V3 的「操作员」里停 —— 云端管不着那个库。
+
+function v3PermBoxes(o) {
+  const has = o.perms || [];
+  return PERMS.map(([k, label]) =>
+    `<label class="row" style="margin:0 14px 0 0;white-space:nowrap">` +
+    `<input type="checkbox" class="v3Perm" data-code="${esc(o.code)}" data-uid="${esc(o.uid)}"` +
+    ` value="${esc(k)}"${has.indexOf(k) >= 0 ? " checked" : ""}> ${esc(label)}</label>`).join("");
+}
+
+async function v3ops(b) {
+  const r = await api("/api/admin/v3operators");
+  const rows = r.operators || [];
+  const codes = (S.health || []).map(m => m.code);
+  b.innerHTML = `<div class="card"><h2>已授权的 V3 操作员<span class="r">${rows.length} 个</span></h2>
+    ${rows.length ? U.table([["商户"], ["操作员编号"], ["权限"], ["更新时间"], [""]],
+      rows.map(o => `<tr>
+        ${U.td(esc(o.code), "商户")}${U.td(esc(o.uid), "操作员编号")}
+        ${U.td(v3PermBoxes(o), "权限")}
+        ${U.td(esc(o.updated_at || "—"), "更新时间")}
+        ${U.td(`<button class="btn link" data-vrevoke="${esc(o.code)}|${esc(o.uid)}">踢出全部会话</button>`, "")}
+      </tr>`).join(""))
+      : '<div class="muted small" style="padding:12px">还没有给任何 V3 操作员配权限。用下面那个表单加一个。</div>'}
+    <div class="muted small" style="margin-top:8px">★ 云端拿不到账套库的操作员名单，所以这里**手填编号**
+    （编号就是他在财鲸 V3 里的操作员编号，例如 101）。<br>
+    ★ **编号不区分大小写**：填 `system` 或 `SYSTEM` 会落到同一条上（以前会存成两条，
+    其中一条永远不生效）。<br>
+    ★ 权限改完立刻生效，但**已登录的人要重新登录一次**才拿到 —— 权限是签在令牌里的。</div>
+  </div>
+  <div class="card"><h2>添加 / 修改</h2><div class="row">
+    <select id="vCode">${codes.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("")}</select>
+    <input id="vUid" placeholder="操作员编号（如 101，不区分大小写）" style="min-width:210px">
+    ${PERMS.map(([k, label]) =>
+      `<label class="row" style="margin:0 12px;white-space:nowrap"><input type="checkbox" class="vPermNew" value="${esc(k)}"> ${esc(label)}</label>`).join("")}
+    <button class="btn" id="vSave">保存</button></div></div>`;
+
+  const save = async (code, uid, perms) => {
+    await api("/api/admin/v3operators/perms", "POST", { code, uid, perms });
+    toast("已保存");
+    renderTab();
+  };
+  $("vSave").addEventListener("click", async () => {
+    const code = $("vCode").value, uid = $("vUid").value.trim();
+    if (!uid) return toast("要填操作员编号", true);
+    try {
+      await save(code, uid,
+        Array.from(document.querySelectorAll(".vPermNew:checked")).map(x => x.value));
+    } catch (e) { toast(e.message, true); }
+  });
+  // 行内勾选：勾一下立刻保存（失败把勾回原样，不让界面撒谎）
+  b.querySelectorAll(".v3Perm").forEach(x => x.addEventListener("change", async () => {
+    const code = x.dataset.code, uid = x.dataset.uid;
+    const boxes = Array.from(b.querySelectorAll(".v3Perm"))
+      .filter(y => y.dataset.code === code && y.dataset.uid === uid);
+    const perms = boxes.filter(y => y.checked).map(y => y.value);
+    try { await save(code, uid, perms); }
+    catch (e) { toast(e.message, true); x.checked = !x.checked; }
+  }));
+  b.querySelectorAll("[data-vrevoke]").forEach(x => x.addEventListener("click", async () => {
+    const [code, uid] = String(x.dataset.vrevoke).split("|");
+    if (!confirm(`踢出「${code} / ${uid}」的全部会话？\n\n他所有设备会立刻掉线，需要重新登录。\n`
+      + "注意：这只是让他下线，**不是**停用他的操作员身份（那要去财鲸 V3 里停）。")) return;
+    try {
+      const rr = await api("/api/admin/v3operators/revoke", "POST", { code, uid });
+      toast(`已踢出全部会话（清 ${rr.dropped || 0} 条）`);
+      renderTab();
+    } catch (e) { toast(e.message, true); }
   }));
 }
 
